@@ -1,33 +1,36 @@
 import warnings
-# On ignore les messages de renommage pour ne pas polluer le terminal
-warnings.filterwarnings("ignore", category=RuntimeWarning)
+# On bloque les avertissements pour garder un terminal propre
+warnings.filterwarnings("ignore")
 
 from duckduckgo_search import DDGS
 
 def get_links(query, location="", school_type=""):
     """
-    Recherche DuckDuckGo optimisée et silencieuse.
+    Recherche DuckDuckGo utilisant la syntaxe simplifiée 2026.
     """
-    full_query = f"{query} {school_type} {location} bourse"
-    print(f"\n--- [DEBUG] Recherche lancée : {full_query} ---")
+    # On nettoie la requête : on évite les doublons (ex: Université université)
+    # et on enlève les espaces en trop
+    clean_query = f"{query} {location} bourse".replace("  ", " ").strip()
+    
+    print(f"\n--- [DEBUG] Tentative avec : {clean_query} ---")
     
     links = []
     try:
+        # Nouvelle syntaxe simplifiée
         with DDGS() as ddgs:
-            # On récupère les résultats
-            results = ddgs.text(full_query, max_results=5)
+            # On utilise le moteur de recherche texte
+            results = ddgs.text(clean_query, max_results=5)
             
-            for r in results:
-                url = r['href']
-                links.append(url)
-                print(f"✅ Lien trouvé : {url}") # Pour voir dans le terminal
+            if results:
+                for r in results:
+                    links.append(r['href'])
+                    print(f"✅ Trouvé : {r['href']}")
+            else:
+                print("⚠️ DuckDuckGo n'a retourné aucun résultat.")
                 
     except Exception as e:
-        print(f"❌ Erreur Scraper : {e}")
+        print(f"❌ Erreur technique Scraper : {e}")
         return []
     
-    if not links:
-        print("⚠️ Aucun lien trouvé pour cette recherche.")
-        
-    print(f"--- [DEBUG] Fin de recherche ({len(links)} liens) ---\n")
+    print(f"--- [DEBUG] Total : {len(links)} liens ---\n")
     return links
