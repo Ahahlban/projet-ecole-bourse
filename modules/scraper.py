@@ -1,27 +1,24 @@
-from googlesearch import search
+from duckduckgo_search import DDGS
 
 def get_links(query, location="", school_type=""):
-    # 1. On nettoie la requête pour qu'elle soit la plus simple possible
+    """
+    Recherche via DuckDuckGo (plus stable que Google pour le développement).
+    """
     full_query = f"{query} {school_type} {location} bourse"
-    
-    # CE MESSAGE DOIT APPARAÎTRE DANS TON TERMINAL
-    print(f"\n--- DEBUG START ---")
-    print(f"Requête envoyée : {full_query}")
+    print(f"--- Recherche DuckDuckGo : {full_query} ---")
     
     links = []
     try:
-        # On essaie la méthode la plus simple possible
-        # On demande juste les URLs
-        for url in search(full_query, num_results=3):
-            print(f"Lien trouvé : {url}")
-            links.append(url)
-            
+        # On utilise le moteur DuckDuckGo qui est plus "gentil" avec les robots
+        with DDGS() as ddgs:
+            # On demande les 5 premiers résultats
+            results = ddgs.text(full_query, max_results=5)
+            for r in results:
+                print(f"Lien trouvé : {r['href']}")
+                links.append(r['href'])
+                
     except Exception as e:
-        print(f"!!! ERREUR DANS LE SCRAPER : {e}")
-        # Si ça échoue, on renvoie au moins un lien de secours pour tester le reste de l'app
-        return ["https://www.google.com"] 
-
-    print(f"Total liens récupérés : {len(links)}")
-    print(f"--- DEBUG END ---\n")
+        print(f"!!! Erreur Scraper : {e}")
+        return []
     
     return links
