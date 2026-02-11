@@ -1,27 +1,27 @@
 from googlesearch import search
 
 def get_links(query, location="", school_type=""):
-    """
-    Recherche réelle sur Google sans les arguments qui font planter le code.
-    """
-    # 1. On construit la requête
-    full_query = f"{query} {school_type} {location} bourse d'étude"
+    # 1. On nettoie la requête pour qu'elle soit la plus simple possible
+    full_query = f"{query} {school_type} {location} bourse"
     
-    print(f"--- Requête envoyée à Google : {full_query} ---")
+    # CE MESSAGE DOIT APPARAÎTRE DANS TON TERMINAL
+    print(f"\n--- DEBUG START ---")
+    print(f"Requête envoyée : {full_query}")
     
     links = []
     try:
-        # 2. Utilisation de num_results (plus moderne que 'stop')
-        # On demande 5 résultats
-        results = search(full_query, num_results=5)
-        
-        # On transforme le résultat en liste
-        for url in results:
+        # On essaie la méthode la plus simple possible
+        # On demande juste les URLs
+        for url in search(full_query, num_results=3):
+            print(f"Lien trouvé : {url}")
             links.append(url)
             
     except Exception as e:
-        # Si Google bloque ou s'il y a un souci réseau, on l'affiche dans le terminal
-        print(f"Erreur lors de la recherche Google : {e}")
-        return []
-        
+        print(f"!!! ERREUR DANS LE SCRAPER : {e}")
+        # Si ça échoue, on renvoie au moins un lien de secours pour tester le reste de l'app
+        return ["https://www.google.com"] 
+
+    print(f"Total liens récupérés : {len(links)}")
+    print(f"--- DEBUG END ---\n")
+    
     return links
