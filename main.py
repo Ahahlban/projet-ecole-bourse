@@ -16,7 +16,7 @@ school_type = st.sidebar.multiselect("Type d'établissement", ["Université", "�
 st.title("🎓 Trouvez votre École & Bourse")
 st.markdown("---")
 
-query = st.text_input("Quelle formation cherchez-tu ?", placeholder="ex: Littérature Japonaise")
+query = st.text_input("Quelle formation cherchez-vous ?", placeholder="ex: Littérature Japonaise")
 
 if st.button("🚀 Lancer la recherche"):
     if not query:
