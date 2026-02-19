@@ -10,32 +10,20 @@ def get_links(keywords, location="", school_type="", max_results=10):
     """
 
     query = f"{keywords} {location} {school_type} bourse"
-    if school_type:
-        query += f" {school_type}"
-
-    # 2️⃣ Encodage de la requête pour qu'elle soit valide dans une URL
     encoded_query = quote(query)
-
-    # 3️⃣ Construction de l'URL de recherche DuckDuckGo (version HTML simple)
     url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
 
-    headers = {
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/119.0.0.0"
-    }
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/119.0.0.0"}
 
-    # 4️⃣ Envoie de la requête HTTP
-    response = requests.get(url, headers=headers)
+    try:
+    
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, "html.parser")
+        results = []
 
-    # 5️⃣ Parser le HTML
-    soup = BeautifulSoup(response.text, "html.parser")
-
-    # 6️⃣ Extraction des liens
-    results = []
-
-    for a in soup.find_all("a", class_="result__a"):
-        link = a.get("href")
-
-        if link:
+        for a in soup.find_all("a", class_="result__a"):
+            link = a.get("href")
+            if link:
             # Des liens de redirection
             parsed_url = urlparse(link)
             query_params = parse_qs(parsed_url.query)
