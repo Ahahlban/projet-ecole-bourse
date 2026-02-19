@@ -9,6 +9,15 @@ def analyse_content(html_content):
 
     text_lc = html_content.lower()
     
+    has_scholarship = any(w in text_lc for w in ["bourse", "allocation", "aide financière"])
+    is_eligible = any(w in text_lc for w in ["éligible", "condition", "critère", "plafond", "quotient familial"])
+
+    # 2. Extraction du montant (Notre Regex)
+    montant = "Non précisé"
+    match = re.search(r'(\d+[\d\s]*€)', html_content)
+    if match:
+        montant = match.group(1).strip()
+    
     soup = BeautifulSoup(html_content, 'html.parser')
 
     # Retirer les éléments inutiles pour alléger
