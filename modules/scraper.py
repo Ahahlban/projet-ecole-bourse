@@ -9,7 +9,6 @@ def get_links(keywords, location="", school_type="", max_results=10):
     et retourne une liste de vraies URLs (non redirections).
     """
 
-    # 1️⃣ Construction de la requête texte
     query = f"{keywords} {location} {school_type} bourse"
     if school_type:
         query += f" {school_type}"
@@ -21,7 +20,7 @@ def get_links(keywords, location="", school_type="", max_results=10):
     url = f"https://html.duckduckgo.com/html/?q={encoded_query}"
 
     headers = {
-        "User-Agent": "Mozilla/5.0"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) Chrome/119.0.0.0"
     }
 
     # 4️⃣ Envoie de la requête HTTP
