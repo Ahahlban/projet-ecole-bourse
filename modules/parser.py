@@ -5,7 +5,7 @@ def analyse_content(html_content):
     """"Fonction pour résumer le texte du site web"""
 
     if not html_content or "Erreur" in html_content:
-        return return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu trop court."}
+        return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu trop court."}
 
     text_lc = html_content.lower()
     
