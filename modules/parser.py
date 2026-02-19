@@ -7,7 +7,8 @@ def analyse_content(html_content):
     if not html_content or "Erreur" in html_content:
         return return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu trop court."}
 
-    # on transforme le code brut en objet BeautifulSoup
+    text_lc = html_content.lower()
+    
     soup = BeautifulSoup(html_content, 'html.parser')
 
     # Retirer les éléments inutiles pour alléger
