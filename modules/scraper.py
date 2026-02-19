@@ -10,7 +10,7 @@ def get_links(keywords, location="", school_type="", max_results=10):
     """
 
     # 1️⃣ Construction de la requête texte
-    query = keywords
+    query = f"{keywords} {location} {school_type} bourse"
     if school_type:
         query += f" {school_type}"
 
