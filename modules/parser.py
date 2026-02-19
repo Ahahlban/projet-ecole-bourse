@@ -17,4 +17,9 @@ def analyse_content(html_content):
     if match:
         montant = match.group(1).strip()
     
+    return {
+        "scholarship": "Oui" if has_scholarship else "À vérifier",
+        "montant": montant,
+        "details": "Conditions détectées" if is_eligible else "Pas de détails d'éligibilité précis."
+    }
    
