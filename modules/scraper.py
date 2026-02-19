@@ -37,18 +37,18 @@ def get_links(keywords, location="", school_type="", max_results=10):
 # ==============================
 # TEST - Scraper.py
 # ==============================
-if __name__ == "__main__":
+# if __name__ == "__main__":
 
-    print("Test de la fonction get_link...\n")
+#     print("Test de la fonction get_link...\n")
 
-    links = get_link(
-        keywords="école ingénieur Paris",
-        school_type="informatique",
-        max_results=11
-    )
+#     links = get_link(
+#         keywords="école ingénieur Paris",
+#         school_type="informatique",
+#         max_results=11
+#     )
 
-    if links:
-        for i, link in enumerate(links, 1):
-            print(f"{i}. {link}")
-    else:
-        print("Aucun résultat trouvé.")
+#     if links:
+#         for i, link in enumerate(links, 1):
+#             print(f"{i}. {link}")
+#     else:
+#         print("Aucun résultat trouvé.")
