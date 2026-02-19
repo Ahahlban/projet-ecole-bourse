@@ -10,7 +10,7 @@ def _clean_text(text: str) -> str:
     """Nettoie le texte extrait: espaces, lignes vides, caractères parasites."""
     text = text.replace("\xa0", " ")
     text = re.sub(r"[ \t]+", " ", text)
-    text = re.sub(r"\n{3,}", "\n\n", text)
+    text = re.sub(r"\n+", " ", text)
     return text.strip()
 
 
