@@ -1,7 +1,7 @@
 import re
 from bs4 import BeautifulSoup
 
-def analyse_content(html_content):
+def analyze_content(html_content):
     """"Fonction pour résumer le texte du site web"""
 
     if not html_content or "Erreur" in html_content:
