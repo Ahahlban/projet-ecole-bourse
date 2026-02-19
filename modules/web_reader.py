@@ -25,9 +25,8 @@ def extract_text(url: str, timeout: int = 10) -> str:
 
         resp.raise_for_status()
 
-        content_type = (resp.headers.get("Content-Type") or "").lower()
-        if "application/pdf" in content_type:
-            return ""
+       if "application/pdf" in resp.headers.get("Content-Type", "").lower():
+            return "Document PDF détecté (lecture directe impossible)."
 
         soup = BeautifulSoup(resp.text, "html.parser")
 
