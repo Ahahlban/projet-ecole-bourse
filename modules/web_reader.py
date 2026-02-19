@@ -33,7 +33,7 @@ def extract_text(url: str, timeout: int = 10) -> str:
         for tag in soup(["script", "style", "noscript", "header", "footer", "nav", "aside", "form"]):
             tag.decompose()
 
-        main = soup.find("main") or soup.find("article")
+       main_content = soup.find("main") or soup.find("article") or soup.find("div", {"id": "content"})
         root = main if main else soup
 
         text = root.get_text(separator="\n", strip=True)
