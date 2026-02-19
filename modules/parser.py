@@ -5,7 +5,7 @@ def analyse_content(html_content):
     """"Fonction pour résumer le texte du site web"""
 
     if not html_content or "Erreur" in html_content:
-        return "Contenu indisponible ou erreur de lecture."
+        return return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu trop court."}
 
     # on transforme le code brut en objet BeautifulSoup
     soup = BeautifulSoup(html_content, 'html.parser')
