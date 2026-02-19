@@ -23,20 +23,15 @@ def get_links(keywords, location="", school_type="", max_results=10):
 
         for a in soup.find_all("a", class_="result__a"):
             link = a.get("href")
-            if link:
-            # Des liens de redirection
-            parsed_url = urlparse(link)
-            query_params = parse_qs(parsed_url.query)
-
-            # On récupère le vrai lien dans le paramètre "uddg"
-            if "uddg" in query_params:
-                real_url = unquote(query_params["uddg"][0])
-                results.append(real_url)
-
-        if len(results) >= max_results:
-            break
-
-    return results
+            if link and "uddg=" in link:
+                real_url = unquote(parse_qs(urlparse(link).query)["uddg"][0])
+                if not any(x in real_url for x in ["facebook", "wikipedia", "forum"]):
+                    results.append(real_url)
+            
+            if len(results) >= max_results: break
+        return results
+    except:
+        return []
 
 
 # ==============================
