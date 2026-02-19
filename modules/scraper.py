@@ -3,7 +3,7 @@ from bs4 import BeautifulSoup
 from urllib.parse import quote, unquote, urlparse, parse_qs
 
 
-def get_links(keywords, school_type=None, max_results=10):
+def get_links(keywords, location="", school_type="", max_results=10):
     """
     Recherche des liens sur DuckDuckGo à partir de mots-clés
     et retourne une liste de vraies URLs (non redirections).
