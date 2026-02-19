@@ -59,6 +59,8 @@ if st.button("🚀 Lancer la recherche"):
                         col1, col2 = st.columns([2, 1])
                         with col1:
                             st.write(f"**Bourse détectée :** {data['scholarship']}")
+                            # C'est cette ligne qu'on ajoute :
+                            st.write(f"**Montant estimé :** :green[{data['montant']}]") 
                             st.write(f"**Analyse :** {data['details']}")
                         with col2:
                             st.link_button("🌐 Visiter le site", link)
