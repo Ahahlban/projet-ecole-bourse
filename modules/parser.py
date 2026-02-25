@@ -8,7 +8,7 @@ def analyze_content(html_content):
 
     try:
         # On crée le client avec la nouvelle méthode
-        client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+        client = genai.Client(api_key=st.secrets["Gemini_API_Key"])
         
         prompt = f"""
         Tu es un expert en bourses. Analyse ce texte et réponds UNIQUEMENT en JSON.
