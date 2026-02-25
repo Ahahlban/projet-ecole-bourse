@@ -1,25 +1,39 @@
-import re
-from bs4 import BeautifulSoup
+import streamlit as st
+from google import genai # Nouveau nom d'import
+import json
 
 def analyze_content(html_content):
-    """"Fonction pour résumer le texte du site web"""
+    if not html_content or "Erreur" in html_content or len(html_content) < 100:
+        return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu illisible."}
 
-    if not html_content or "Erreur" in html_content:
-        return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu trop court."}
+    try:
+        # On crée le client avec la nouvelle méthode
+        client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+        
+        prompt = f"""
+        Tu es un expert en bourses. Analyse ce texte et réponds UNIQUEMENT en JSON.
+        Format : 
+        {{
+            "scholarship": "Oui" ou "Non",
+            "montant": "Le montant (ex: 500€) ou 'Non précisé'",
+            "details": "Résumé des conditions."
+        }}
+        Texte : {html_content[:4000]}
+        """
 
-    text_lc = html_content.lower()
-    
-    has_scholarship = any(w in text_lc for w in ["bourse", "allocation", "aide financière"])
-    is_eligible = any(w in text_lc for w in ["éligible", "condition", "critère", "plafond", "quotient familial"])
+        # Appel au modèle avec la nouvelle syntaxe
+        response = client.models.generate_content(
+            model="gemini-1.5-flash", 
+            contents=prompt
+        )
+        
+        # On récupère le texte et on nettoie le JSON
+        raw_res = response.text.strip().replace('```json', '').replace('```', '')
+        return json.loads(raw_res)
 
-    montant = "Non précisé"
-    match = re.search(r'(\d+[\d\s]*€)', html_content)
-    if match:
-        montant = match.group(1).strip()
-    
-    return {
-        "scholarship": "Oui" if has_scholarship else "À vérifier",
-        "montant": montant,
-        "details": "Conditions détectées" if is_eligible else "Pas de détails d'éligibilité précis."
-    }
-   
+    except Exception as e:
+        return {
+            "scholarship": "Erreur IA",
+            "montant": "N/A",
+            "details": f"Erreur technique (v2) : {str(e)}"
+        }
