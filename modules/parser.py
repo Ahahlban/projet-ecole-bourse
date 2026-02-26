@@ -23,7 +23,7 @@ def analyze_content(html_content):
 
         # Appel au modèle avec la nouvelle syntaxe
         response = client.models.generate_content(
-            model="gemini-1.5-flash", 
+            model="gemini-1.5-flash-latest", 
             contents=prompt
         )
         
