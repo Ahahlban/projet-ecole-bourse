@@ -32,7 +32,7 @@ def filter_school_links(url_list):
         """
 
         response = client.models.generate_content(
-            model="gemini-2.5-flash", 
+            model="gemini-flash-latest", 
             contents=prompt
         )
         
