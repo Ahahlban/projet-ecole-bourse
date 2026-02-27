@@ -27,9 +27,9 @@ def analyze_content(html_content):
         Texte : {html_content[:4000]}
         """
 
-       # On passe sur la version 2.0, plus stable et disponible partout en 2026
+      # On repasse sur le 1.5 Flash qui a des quotas beaucoup plus généreux pour les tests
         response = client.models.generate_content(
-            model="gemini-2.0-flash", 
+            model="gemini-1.5-flash", 
             contents=prompt
         )
         
