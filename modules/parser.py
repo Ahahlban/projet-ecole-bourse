@@ -1,5 +1,6 @@
-import re
-from bs4 import BeautifulSoup
+import streamlit as st
+from google import genai
+import json
 
 def filter_school_links(url_list):
 
