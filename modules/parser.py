@@ -21,9 +21,9 @@ def analyze_content(html_content):
         Texte : {html_content[:4000]}
         """
 
-        # Appel au modèle avec la nouvelle syntaxe
+       # On passe sur la version 2.0, plus stable et disponible partout en 2026
         response = client.models.generate_content(
-            model="gemini-1.5-flash-latest", 
+            model="gemini-2.0-flash", 
             contents=prompt
         )
         
