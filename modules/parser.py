@@ -1,26 +1,25 @@
 import streamlit as st
-from google import genai # Nouveau nom d'import
+from google import genai
 import json
-
-# BLOC DE DEBUG TEMPORAIRE
-    # client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
-    # for m in client.models.list():
-    #     print(f"Modèle dispo : {m.name}")
-
 
 def analyze_content(html_content):
     if not html_content or "Erreur" in html_content or len(html_content) < 100:
         return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu illisible."}
 
-    # Bloc de diagnostic à lancer une seule fois
-    # client = genai.Client(api_key=st.secrets["Gemini_API_Key"])
-    # for m in client.models.list():
-    #     print(f"Modèle disponible : {m.name}")
-    
     try:
-        # On crée le client avec la nouvelle méthode
+        # Utilisation de ton nom de clé exact
         client = genai.Client(api_key=st.secrets["Gemini_API_Key"])
         
+        # --- BLOC DE DIAGNOSTIC ---
+        # Cette fois, on enlève les '#' pour que ça s'affiche vraiment dans le terminal !
+        print("\n=== LISTE DES MODÈLES DISPONIBLES POUR TA CLÉ ===")
+        try:
+            for m in client.models.list():
+                print(f"-> {m.name}")
+        except Exception as diag_err:
+            print(f"Erreur lors du listing des modèles : {diag_err}")
+        print("================================================\n")
+
         prompt = f"""
         Tu es un expert en bourses. Analyse ce texte et réponds UNIQUEMENT en JSON.
         Format : 
@@ -32,13 +31,12 @@ def analyze_content(html_content):
         Texte : {html_content[:4000]}
         """
 
-     # On utilise la version stable spécifique pour éviter l'erreur 404 v1beta
+        # On tente le modèle flash standard
         response = client.models.generate_content(
-            model="gemini-1.5-flash-002", 
+            model="gemini-1.5-flash", 
             contents=prompt
         )
         
-        # On récupère le texte et on nettoie le JSON
         raw_res = response.text.strip().replace('```json', '').replace('```', '')
         return json.loads(raw_res)
 
