@@ -27,9 +27,9 @@ def analyze_content(html_content):
         Texte : {html_content[:4000]}
         """
 
-      # On repasse sur le 1.5 Flash qui a des quotas beaucoup plus généreux pour les tests
+     # On utilise la version stable spécifique pour éviter l'erreur 404 v1beta
         response = client.models.generate_content(
-            model="gemini-1.5-flash", 
+            model="gemini-1.5-flash-002", 
             contents=prompt
         )
         
