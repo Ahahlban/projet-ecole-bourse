@@ -2,6 +2,12 @@ import streamlit as st
 from google import genai # Nouveau nom d'import
 import json
 
+# BLOC DE DEBUG TEMPORAIRE
+    # client = genai.Client(api_key=st.secrets["GEMINI_API_KEY"])
+    # for m in client.models.list():
+    #     print(f"Modèle dispo : {m.name}")
+
+
 def analyze_content(html_content):
     if not html_content or "Erreur" in html_content or len(html_content) < 100:
         return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu illisible."}
