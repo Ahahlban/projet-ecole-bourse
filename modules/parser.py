@@ -12,6 +12,11 @@ def analyze_content(html_content):
     if not html_content or "Erreur" in html_content or len(html_content) < 100:
         return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu illisible."}
 
+    # Bloc de diagnostic à lancer une seule fois
+    # client = genai.Client(api_key=st.secrets["Gemini_API_Key"])
+    # for m in client.models.list():
+    #     print(f"Modèle disponible : {m.name}")
+    
     try:
         # On crée le client avec la nouvelle méthode
         client = genai.Client(api_key=st.secrets["Gemini_API_Key"])
