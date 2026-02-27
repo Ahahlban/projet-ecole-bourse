@@ -78,9 +78,10 @@ def analyze_content(html_content):
         Texte : {html_content[:4000]}
         """
 
-      # On utilise le modèle 2.5 Flash qui est en haut de ta liste diagnostic
+     # On utilise l'alias 'latest' ou la version 'lite' qui ont de bien meilleurs quotas
+        # par rapport aux 20 requêtes du 2.5
         response = client.models.generate_content(
-            model="gemini-2.5-flash", 
+            model="gemini-flash-latest", 
             contents=prompt
         )
         
