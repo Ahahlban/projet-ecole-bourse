@@ -11,7 +11,7 @@ def _clean_text(text: str) -> str:
     text = re.sub(r"\n+", " ", text) 
     return text.strip()
 
-def extract_text(url: str, timeout: int = 10) -> str:
+def get_page_content(url: str, timeout: int = 10) -> str:
     """Télécharge une page web et renvoie le texte utile."""
     try:
         resp = requests.get(url, headers=HEADERS, timeout=timeout, allow_redirects=True)
