@@ -1,6 +1,8 @@
 import re
 from bs4 import BeautifulSoup
 
+def filter_school_links(url_list):
+
 def analyze_content(html_content):
     """"Fonction pour résumer le texte du site web"""
 
