@@ -2,6 +2,53 @@ import streamlit as st
 from google import genai
 import json
 
+
+def filter_school_links(url_list):
+    """
+    Utilise l'IA pour trier les URLs et ne garder que les sites officiels d'écoles.
+    Évite de télécharger du contenu inutile pour rester 'Low Data'.
+    """
+    if not url_list:
+        return []
+
+    try:
+        client = genai.Client(api_key=st.secrets["Gemini_API_Key"])
+        
+        # On prépare la liste pour l'IA
+        urls_string = "\n".join(url_list)
+        
+        prompt = f"""
+        Tu es un assistant spécialisé dans l'orientation scolaire. 
+        Parmi cette liste d'URLs, identifie UNIQUEMENT celles qui sont des sites officiels d'écoles, 
+        d'universités ou de centres de formation.
+        
+        EXCLUS formellement : 
+        - Les annuaires (Studyrama, Diplomeo, L'Etudiant, etc.)
+        - Les forums ou blogs
+        - Les sites de presse
+        
+        Réponds UNIQUEMENT sous forme d'une liste JSON de strings.
+        Liste : {urls_string}
+        """
+
+        response = client.models.generate_content(
+            model="gemini-2.5-flash", 
+            contents=prompt
+        )
+        
+        # Nettoyage et chargement du JSON
+        raw_res = response.text.strip().replace('```json', '').replace('```', '')
+        filtered_links = json.loads(raw_res)
+        
+        # On s'assure de ne pas en garder trop pour limiter la data finale (ex: top 8)
+        return filtered_links[:8]
+
+    except Exception as e:
+        print(f"Erreur lors du filtrage IA : {e}")
+        # En cas d'erreur, on renvoie les 5 premiers par défaut pour ne pas bloquer l'app
+        return url_list[:5]
+
+
 def analyze_content(html_content):
     if not html_content or "Erreur" in html_content or len(html_content) < 100:
         return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu illisible."}
