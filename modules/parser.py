@@ -31,9 +31,9 @@ def analyze_content(html_content):
         Texte : {html_content[:4000]}
         """
 
-        # On tente le modèle flash standard
+      # On utilise le modèle 2.5 Flash qui est en haut de ta liste diagnostic
         response = client.models.generate_content(
-            model="gemini-1.5-flash", 
+            model="gemini-2.5-flash", 
             contents=prompt
         )
         
