@@ -50,23 +50,16 @@ def filter_school_links(url_list):
 
 
 def analyze_content(html_content):
+    """
+    Analyse le texte d'une page pour détecter les bourses.
+    """
     if not html_content or "Erreur" in html_content or len(html_content) < 100:
         return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu illisible."}
 
     try:
-        # Utilisation de ton nom de clé exact
+        # Initialisation du client sans le bloc de diagnostic
         client = genai.Client(api_key=st.secrets["Gemini_API_Key"])
         
-        # --- BLOC DE DIAGNOSTIC ---
-        # Cette fois, on enlève les '#' pour que ça s'affiche vraiment dans le terminal !
-        print("\n=== LISTE DES MODÈLES DISPONIBLES POUR TA CLÉ ===")
-        try:
-            for m in client.models.list():
-                print(f"-> {m.name}")
-        except Exception as diag_err:
-            print(f"Erreur lors du listing des modèles : {diag_err}")
-        print("================================================\n")
-
         prompt = f"""
         Tu es un expert en bourses. Analyse ce texte et réponds UNIQUEMENT en JSON.
         Format : 
@@ -78,8 +71,7 @@ def analyze_content(html_content):
         Texte : {html_content[:4000]}
         """
 
-     # On utilise l'alias 'latest' ou la version 'lite' qui ont de bien meilleurs quotas
-        # par rapport aux 20 requêtes du 2.5
+        # Utilisation de l'alias stable pour les quotas
         response = client.models.generate_content(
             model="gemini-flash-latest", 
             contents=prompt
@@ -92,5 +84,5 @@ def analyze_content(html_content):
         return {
             "scholarship": "Erreur IA",
             "montant": "N/A",
-            "details": f"Erreur technique (v2) : {str(e)}"
+            "details": f"Erreur technique : {str(e)}"
         }
