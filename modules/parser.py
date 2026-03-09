@@ -13,7 +13,6 @@ def filter_school_links(url_list):
     try:
         client = genai.Client(api_key=st.secrets["Gemini_API_Key"])
         
-        # On prépare la liste pour l'IA
         urls_string = "\n".join(url_list)
         
         prompt = f"""
@@ -30,17 +29,14 @@ def filter_school_links(url_list):
         Liste : {urls_string}
         """
 
-        # Utilisation du modèle haute capacité pour le filtrage
         response = client.models.generate_content(
             model="gemini-flash-latest", 
             contents=prompt
         )
         
-        # Nettoyage et chargement du JSON
         raw_res = response.text.strip().replace('```json', '').replace('```', '')
         filtered_links = json.loads(raw_res)
         
-        # On limite pour rester dans l'esprit Low Data
         return filtered_links[:8]
 
     except Exception as e:
@@ -50,15 +46,21 @@ def filter_school_links(url_list):
 
 def analyze_content(html_content, lang="Français"):
     """
-    Analyse le texte d'une page pour détecter les bourses et traduit le résultat.
+    Analyse le texte pour détecter les bourses et les coûts de scolarité.
+    Traduit les résultats dans la langue choisie.
     """
     if not html_content or "Erreur" in html_content or len(html_content) < 100:
-        return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu illisible."}
+        return {
+            "scholarship": "À vérifier", 
+            "montant": "Non détecté", 
+            "cout_annuel": "Non détecté", 
+            "details": "Contenu illisible."
+        }
 
     try:
         client = genai.Client(api_key=st.secrets["Gemini_API_Key"])
         
-        # Prompt mis à jour pour la traduction internationale
+        # Prompt enrichi pour inclure le coût de l'école
         prompt = f"""
         Tu es un expert en bourses internationales. 
         Analyse ce texte et réponds UNIQUEMENT en JSON.
@@ -67,13 +69,13 @@ def analyze_content(html_content, lang="Français"):
         Format de réponse JSON : 
         {{
             "scholarship": "Oui" ou "Non",
-            "montant": "Le montant (converti ou original)",
-            "details": "Résumé des conditions rédigé obligatoirement en {lang}."
+            "montant": "Montant de la bourse (ex: 2000€) ou 'Non précisé'",
+            "cout_annuel": "Frais de scolarité annuels (ex: 9000€) ou 'Non précisé'",
+            "details": "Résumé des conditions et dates limites rédigé en {lang}."
         }}
-        Texte à analyser : {html_content[:4000]}
+        Texte : {html_content[:4000]}
         """
 
-        # Utilisation du modèle haute capacité pour l'analyse
         response = client.models.generate_content(
             model="gemini-flash-latest", 
             contents=prompt
@@ -86,5 +88,6 @@ def analyze_content(html_content, lang="Français"):
         return {
             "scholarship": "Erreur IA",
             "montant": "N/A",
+            "cout_annuel": "N/A",
             "details": f"Erreur technique : {str(e)}"
         }
