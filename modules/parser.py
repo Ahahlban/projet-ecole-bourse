@@ -30,7 +30,7 @@ def filter_school_links(url_list):
         """
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash-lite", 
+            model="gemini-flash-lite-latest", 
             contents=prompt
         )
         
@@ -77,7 +77,7 @@ def analyze_content(html_content, lang="Français"):
         """
 
         response = client.models.generate_content(
-            model="gemini-2.0-flash-lite", 
+            model="gemini-flash-lite-latest", 
             contents=prompt
         )
         
