@@ -5,11 +5,11 @@ from modules.web_reader import get_page_content
 from modules.parser import filter_school_links, analyze_content
 
 # --- CONFIGURATION ---
-st.set_page_config(page_title="EduSearch Low-Data", page_icon="🎓", layout="wide")
+st.set_page_config(page_title="EduSearch Global", page_icon="🌍", layout="wide")
 
-# --- FONCTIONS AVEC CACHE (Économie de Quota) ---
+# --- FONCTIONS AVEC CACHE ---
 
-@st.cache_data(ttl=3600) # Garde en mémoire pendant 1 heure
+@st.cache_data(ttl=3600)
 def cached_get_links(q, l, t):
     return get_links(q, l, t, max_results=30)
 
@@ -18,43 +18,53 @@ def cached_filter_links(links_list):
     return filter_school_links(links_list)
 
 @st.cache_data(ttl=3600)
-def cached_analysis(url):
-    # Combine la lecture et l'analyse pour ne faire qu'une seule entrée en cache
+def cached_analysis(url, lang):
+    # On transmet la langue cible à l'analyseur
     raw_text = get_page_content(url)
-    return analyze_content(raw_text), raw_text
+    return analyze_content(raw_text, lang), raw_text
 
-# --- INTERFACE ---
-st.sidebar.header("🔍 Filtres de recherche")
-location = st.sidebar.selectbox("Région", ["Toute la France", "Paris", "Lyon", "Bordeaux", "Marseille"])
-school_type = st.sidebar.multiselect("Type d'établissement", ["Université", "École de Commerce", "École d'Ingénieur", "École d'Art"])
+# --- BARRE LATÉRALE (Filtres Internationaux) ---
+st.sidebar.header("🌐 Configuration Globale")
 
-st.title("🎓 Trouvez votre École & Bourse")
+# 1. Sélecteur de langue pour les résultats
+target_lang = st.sidebar.selectbox(
+    "Langue des résultats", 
+    ["Français", "English", "Español", "Deutsch", "Português"]
+)
+
+st.sidebar.divider()
+
+# 2. Saisie libre pour la localisation (plus de liste limitée !)
+location = st.sidebar.text_input("📍 Pays ou Ville", placeholder="ex: Canada, Berlin, Tokyo...")
+
+# 3. Saisie libre pour le type d'école
+school_type = st.sidebar.text_input("🏫 Type d'école", placeholder="ex: University, College, Art School...")
+
+# --- CORPS DE PAGE ---
+st.title("🌍 EduSearch International")
+st.subheader("Trouvez des bourses partout dans le monde")
 st.markdown("---")
 
-query = st.text_input("Quelle formation cherchez-vous ?", placeholder="ex: Informatique")
+query = st.text_input("Quelle formation cherchez-vous ?", placeholder="ex: Computer Science, Design...")
 
-if st.button("🚀 Lancer la recherche"):
+if st.button("🚀 Lancer la recherche internationale"):
     if not query:
-        st.warning("Oups ! Entre un mot-clé.")
+        st.warning("Veuillez entrer un mot-clé.")
     else:
-        with st.spinner("Recherche intelligente... (Optimisation Data en cours)"):
+        with st.spinner(f"Recherche en cours... (Cible : {target_lang})"):
             
-            type_str = " ".join(school_type)
-            loc_str = "" if location == "Toute la France" else location
-            
-            # Utilisation des versions CACHÉES
-            raw_links = cached_get_links(query, loc_str, type_str)
+            # Utilisation des saisies libres
+            raw_links = cached_get_links(query, location, school_type)
             
             if not raw_links:
-                st.error("❌ Aucun lien trouvé.")
+                st.error("❌ Aucun résultat trouvé. Essayez des mots-clés en anglais si la zone est internationale.")
             else:
                 status_text = st.empty()
-                status_text.info("🤖 Filtrage IA des écoles (Utilise le cache si déjà fait)...")
+                status_text.info("🤖 Sélection des meilleures sources internationales...")
                 
-                # Filtrage optimisé
                 links = cached_filter_links(raw_links)
                 
-                st.success(f"✅ {len(links)} écoles retenues.")
+                st.success(f"✅ {len(links)} sources retenues !")
                 
                 progress_bar = st.progress(0)
                 
@@ -62,19 +72,19 @@ if st.button("🚀 Lancer la recherche"):
                     percent_complete = (i + 1) / len(links)
                     progress_bar.progress(percent_complete)
                     
-                    # Analyse optimisée : si l'URL a déjà été vue, l'IA n'est pas appelée
-                    data, raw_text = cached_analysis(link)
+                    # On passe la langue choisie à l'analyse
+                    data, raw_text = cached_analysis(link, target_lang)
 
-                    with st.expander(f"📍 École : {link[:70]}..."):
+                    with st.expander(f"📍 Source : {link[:70]}..."):
                         col1, col2 = st.columns([2, 1])
                         with col1:
                             st.write(f"**Bourse :** {data.get('scholarship', 'N/A')}")
                             st.write(f"**Montant :** :green[{data.get('montant', 'N/A')}]") 
-                            st.write(f"**Détails :** {data.get('details', 'N/A')}")
+                            st.write(f"**Analyse ({target_lang}) :** {data.get('details', 'N/A')}")
                         with col2:
-                            st.link_button("🌐 Visiter", link)
+                            st.link_button("🌐 Visiter le site", link)
                         
                         st.divider()
-                        st.caption(f"Aperçu : {raw_text[:200]}...")
+                        st.caption(f"Aperçu du contenu original : {raw_text[:200]}...")
 
                 st.balloons()

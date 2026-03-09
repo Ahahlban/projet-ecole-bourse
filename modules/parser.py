@@ -2,7 +2,6 @@ import streamlit as st
 from google import genai
 import json
 
-
 def filter_school_links(url_list):
     """
     Utilise l'IA pour trier les URLs et ne garder que les sites officiels d'écoles.
@@ -31,6 +30,7 @@ def filter_school_links(url_list):
         Liste : {urls_string}
         """
 
+        # Utilisation du modèle haute capacité pour le filtrage
         response = client.models.generate_content(
             model="gemini-flash-latest", 
             contents=prompt
@@ -40,38 +40,40 @@ def filter_school_links(url_list):
         raw_res = response.text.strip().replace('```json', '').replace('```', '')
         filtered_links = json.loads(raw_res)
         
-        # On s'assure de ne pas en garder trop pour limiter la data finale (ex: top 8)
+        # On limite pour rester dans l'esprit Low Data
         return filtered_links[:8]
 
     except Exception as e:
         print(f"Erreur lors du filtrage IA : {e}")
-        # En cas d'erreur, on renvoie les 5 premiers par défaut pour ne pas bloquer l'app
         return url_list[:5]
 
 
-def analyze_content(html_content):
+def analyze_content(html_content, lang="Français"):
     """
-    Analyse le texte d'une page pour détecter les bourses.
+    Analyse le texte d'une page pour détecter les bourses et traduit le résultat.
     """
     if not html_content or "Erreur" in html_content or len(html_content) < 100:
         return {"scholarship": "À vérifier", "montant": "Non détecté", "details": "Contenu illisible."}
 
     try:
-        # Initialisation du client sans le bloc de diagnostic
         client = genai.Client(api_key=st.secrets["Gemini_API_Key"])
         
+        # Prompt mis à jour pour la traduction internationale
         prompt = f"""
-        Tu es un expert en bourses. Analyse ce texte et réponds UNIQUEMENT en JSON.
-        Format : 
+        Tu es un expert en bourses internationales. 
+        Analyse ce texte et réponds UNIQUEMENT en JSON.
+        TRADUIS impérativement ton résumé et les détails en {lang}.
+
+        Format de réponse JSON : 
         {{
             "scholarship": "Oui" ou "Non",
-            "montant": "Le montant (ex: 500€) ou 'Non précisé'",
-            "details": "Résumé des conditions."
+            "montant": "Le montant (converti ou original)",
+            "details": "Résumé des conditions rédigé obligatoirement en {lang}."
         }}
-        Texte : {html_content[:4000]}
+        Texte à analyser : {html_content[:4000]}
         """
 
-        # Utilisation de l'alias stable pour les quotas
+        # Utilisation du modèle haute capacité pour l'analyse
         response = client.models.generate_content(
             model="gemini-flash-latest", 
             contents=prompt
