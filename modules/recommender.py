@@ -36,7 +36,7 @@ def generate_recommendations(profile: dict, results: list[dict], api_key: str) -
     try:
         genai.configure(api_key=final_key)
         # On force le modèle haute capacité
-        model = genai.GenerativeModel("gemini-2.0-flash-lite")
+        model = genai.GenerativeModel("gemini-flash-lite-latest")
 
         results_text = ""
         for i, r in enumerate(results, 1):
