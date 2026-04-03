@@ -20,22 +20,22 @@ def update_search_context(results: list[dict]):
         )
     st.session_state.search_context = "\n".join(context_parts)
 
-def get_chatbot_response(user_message: str, api_key: str) -> str:
-    # Priorité à la clé des Secrets si la barre latérale est vide
-    final_key = api_key if api_key else st.secrets.get("Gemini_API_Key")
+def get_chatbot_response(user_message: str) -> str:
+    # Récupération directe depuis les secrets
+    api_key = st.secrets.get("Gemini_API_Key")
     
-    if not final_key:
-        return "❌ Erreur : Aucune clé API configurée."
+    if not api_key:
+        return "❌ Erreur : La clé 'Gemini_API_Key' n'est pas configurée dans les Secrets Streamlit."
 
     try:
-        genai.configure(api_key=final_key)
-        # Modèle haute capacité pour éviter les erreurs 429
+        genai.configure(api_key=api_key)
+        # Modèle haute capacité (1500 req/jour)
         model = genai.GenerativeModel("gemini-flash-lite-latest")
 
         system_prompt = (
             "Tu es un assistant expert en bourses d'études. "
             "Réponds en français de manière claire. "
-            "Utilise le contexte suivant si disponible :\n\n"
+            "Utilise le contexte suivant si disponible pour aider l'utilisateur :\n\n"
         )
 
         context = st.session_state.get("search_context", "")
@@ -51,7 +51,8 @@ def get_chatbot_response(user_message: str, api_key: str) -> str:
     except Exception as e:
         return f"❌ Erreur technique : {str(e)}"
 
-def render_chatbot(api_key: str):
+def render_chatbot():
+    """Affiche l'interface du chatbot sans demander de clé."""
     init_chatbot()
     st.markdown("---")
     st.subheader("🤖 Assistant IA")
@@ -59,9 +60,8 @@ def render_chatbot(api_key: str):
     for msg in st.session_state.chat_history:
         st.chat_message(msg["role"]).write(msg["content"])
 
-    user_input = st.chat_input("Posez votre question...")
+    user_input = st.chat_input("Posez votre question sur les bourses ou les résultats...")
     if user_input:
         st.chat_message("user").write(user_input)
-        # On passe la clé de la barre latérale (qui peut être vide)
-        response = get_chatbot_response(user_input, api_key)
+        response = get_chatbot_response(user_input)
         st.chat_message("assistant").write(response)
