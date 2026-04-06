@@ -1,227 +1,119 @@
-import io
-import pandas as pd
-import streamlit as st
+"""
+SCRIPT 4 — export.py
+====================
+Génère un fichier .txt simple et lisible
+que l'étudiant peut télécharger et lire hors-ligne
+sur n'importe quel appareil (même vieux téléphone).
+"""
+
 from datetime import datetime
 
 
-def _list_to_text(value):
-    """Convertit une liste en texte lisible pour export."""
-    if isinstance(value, list):
-        return ", ".join(str(v) for v in value) if value else "N/A"
-    return value if value not in [None, ""] else "N/A"
-
-
-def create_excel_report(results: list[dict], query: str = "") -> bytes:
+def generer_txt(schools: list[dict], query: str = "", filters: dict = {}) -> str:
     """
-    Crée un fichier Excel structuré avec les résultats.
+    Transforme la liste d'écoles filtrées en texte simple.
 
-    Args:
-        results: Liste de dicts avec les données des écoles
-        query: La recherche effectuée
-
-    Returns:
-        Bytes du fichier Excel
+    Retourne une chaîne de caractères prête à être téléchargée.
     """
-    rows = []
-    for i, r in enumerate(results, 1):
-        rows.append({
-            "#": i,
-            "Établissement": r.get("school_name", "N/A"),
-            "Localisation": r.get("location", "N/A"),
-            "Pays": r.get("country", "N/A"),
-            "Type d'établissement": r.get("school_type", "N/A"),
-            "Programmes": _list_to_text(r.get("programs", [])),
-            "Niveaux d'études": _list_to_text(r.get("degree_levels", [])),
-            "Langue d'enseignement": r.get("language_of_instruction", "N/A"),
-            "Frais de scolarité": r.get("tuition_fee", "N/A"),
-            "Frais de dossier": r.get("application_fee", "N/A"),
-            "Bourse disponible": r.get("scholarship_available", "N/A"),
-            "Montant bourse": r.get("scholarship_amount", "N/A"),
-            "Détails bourse": r.get("scholarship_details", "N/A"),
-            "Éligibilité": r.get("eligibility", "N/A"),
-            "Conditions d'admission": r.get("admission_requirements", "N/A"),
-            "Date limite": r.get("deadline", "N/A"),
-            "Durée": r.get("duration", "N/A"),
-            "Contact officiel": r.get("official_contact", "N/A"),
-            "Résumé": r.get("summary", "N/A"),
-            "Source (URL)": r.get("url", "N/A"),
-        })
+    lignes = []
 
-    df = pd.DataFrame(rows)
+    # ── En-tête ───────────────────────────────────────────────────────
+    lignes.append("=" * 60)
+    lignes.append("       EDUSEARCH — Résultats de votre recherche")
+    lignes.append("=" * 60)
+    lignes.append(f"Date       : {datetime.now().strftime('%d/%m/%Y à %H:%M')}")
+    lignes.append(f"Recherche  : {query or 'Aucun mot-clé'}")
 
-    output = io.BytesIO()
-    with pd.ExcelWriter(output, engine="openpyxl") as writer:
-        df.to_excel(writer, sheet_name="Résultats Écoles", index=False)
+    # Résumé des filtres utilisés
+    filtres_actifs = []
+    if filters.get("categorie"):
+        filtres_actifs.append(f"Domaine: {filters['categorie']}")
+    if filters.get("pays"):
+        filtres_actifs.append(f"Pays: {filters['pays']}")
+    if filters.get("langue"):
+        filtres_actifs.append(f"Langue: {filters['langue']}")
+    if filters.get("niveau"):
+        filtres_actifs.append(f"Niveau: {filters['niveau']}")
+    if filters.get("bourse_seulement"):
+        filtres_actifs.append("Bourse uniquement: Oui")
+    if filters.get("budget_max"):
+        filtres_actifs.append(f"Budget max: {filters['budget_max']} €/an")
 
-        summary_data = {
-            "Info": [
-                "Recherche effectuée",
-                "Date du rapport",
-                "Nombre de résultats",
-                "Généré par"
-            ],
-            "Valeur": [
-                query or "N/A",
-                datetime.now().strftime("%d/%m/%Y à %H:%M"),
-                len(results),
-                "EduSearch Global 🌍"
-            ]
-        }
-        pd.DataFrame(summary_data).to_excel(writer, sheet_name="Résumé", index=False)
+    lignes.append(f"Filtres    : {' | '.join(filtres_actifs) if filtres_actifs else 'Aucun'}")
+    lignes.append(f"Résultats  : {len(schools)} école(s) trouvée(s)")
+    lignes.append("=" * 60)
+    lignes.append("")
 
-        for sheet_name in writer.sheets:
-            worksheet = writer.sheets[sheet_name]
-            for column_cells in worksheet.columns:
-                max_length = 0
-                column = column_cells[0].column_letter
-                for cell in column_cells:
-                    try:
-                        if cell.value:
-                            max_length = max(max_length, len(str(cell.value)))
-                    except Exception:
-                        pass
-                adjusted_width = min(max_length + 2, 60)
-                worksheet.column_dimensions[column].width = adjusted_width
+    if not schools:
+        lignes.append("Aucune école ne correspond à vos critères.")
+        lignes.append("Essayez d'élargir vos filtres.")
+        return "\n".join(lignes)
 
-    return output.getvalue()
+    # ── Fiche de chaque école ─────────────────────────────────────────
+    for i, school in enumerate(schools, 1):
+        lignes.append(f"--- École #{i} {'─' * 40}")
+        lignes.append(f"Nom          : {school.get('nom', 'Non précisé')}")
+        lignes.append(f"Pays / Ville : {school.get('pays', '?')} — {school.get('ville', '?')}")
+        lignes.append(f"Type         : {school.get('type', '?')}")
+        lignes.append(f"Domaine      : {school.get('categorie', '?')}")
 
+        # Niveaux sous forme de liste
+        niveaux = school.get("niveau", [])
+        if isinstance(niveaux, list):
+            lignes.append(f"Niveaux      : {', '.join(niveaux) if niveaux else '?'}")
+        else:
+            lignes.append(f"Niveaux      : {niveaux}")
 
-def create_csv_report(results: list[dict]) -> str:
-    """
-    Crée un fichier CSV avec les résultats.
+        lignes.append(f"Langue       : {school.get('langue', '?')}")
+        lignes.append(f"Durée        : {school.get('duree', '?')}")
+        lignes.append("")
 
-    Args:
-        results: Liste de dicts avec les données des écoles
+        # Infos financières
+        lignes.append("  INFORMATIONS FINANCIÈRES :")
+        frais = school.get("frais_annuels", "")
+        lignes.append(f"  Frais annuels    : {frais if frais else 'Non communiqué'}")
 
-    Returns:
-        String CSV
-    """
-    rows = []
-    for r in results:
-        rows.append({
-            "Établissement": r.get("school_name", "N/A"),
-            "Localisation": r.get("location", "N/A"),
-            "Pays": r.get("country", "N/A"),
-            "Type": r.get("school_type", "N/A"),
-            "Programmes": _list_to_text(r.get("programs", [])),
-            "Niveaux": _list_to_text(r.get("degree_levels", [])),
-            "Langue": r.get("language_of_instruction", "N/A"),
-            "Frais de scolarité": r.get("tuition_fee", "N/A"),
-            "Frais de dossier": r.get("application_fee", "N/A"),
-            "Bourse disponible": r.get("scholarship_available", "N/A"),
-            "Montant bourse": r.get("scholarship_amount", "N/A"),
-            "Détails bourse": r.get("scholarship_details", "N/A"),
-            "Éligibilité": r.get("eligibility", "N/A"),
-            "Admission": r.get("admission_requirements", "N/A"),
-            "Date limite": r.get("deadline", "N/A"),
-            "Durée": r.get("duration", "N/A"),
-            "Contact": r.get("official_contact", "N/A"),
-            "Résumé": r.get("summary", "N/A"),
-            "URL": r.get("url", "N/A"),
-        })
+        bourse = school.get("bourse_disponible", "")
+        lignes.append(f"  Bourse dispo     : {bourse if bourse else 'Non précisé'}")
 
-    df = pd.DataFrame(rows)
-    return df.to_csv(index=False)
+        montant = school.get("montant_bourse", "")
+        if montant:
+            lignes.append(f"  Montant bourse   : {montant}")
+        lignes.append("")
 
+        # Infos candidature
+        lignes.append("  CANDIDATURE :")
+        lignes.append(f"  Conditions       : {school.get('conditions_admission', 'Voir site officiel')}")
+        date = school.get("date_limite", "")
+        lignes.append(f"  Date limite      : {date if date else 'À vérifier sur le site'}")
+        lignes.append("")
 
-def create_text_report(results: list[dict], query: str = "") -> str:
-    """
-    Crée un rapport texte formaté.
+        # Résumé
+        resume = school.get("resume", "")
+        if resume:
+            lignes.append("  POURQUOI CETTE ÉCOLE :")
+            # Couper les longues lignes pour la lisibilité
+            for segment in [resume[j:j+55] for j in range(0, len(resume), 55)]:
+                lignes.append(f"  {segment}")
+            lignes.append("")
 
-    Args:
-        results: Liste de dicts avec les données des écoles
-        query: La recherche effectuée
+        # Contact
+        site = school.get("site_web", "")
+        contact = school.get("contact", "")
+        if site or contact:
+            lignes.append("  CONTACT :")
+            if site:
+                lignes.append(f"  Site web : {site}")
+            if contact:
+                lignes.append(f"  Contact  : {contact}")
+            lignes.append("")
 
-    Returns:
-        String du rapport
-    """
-    lines = [
-        "=" * 70,
-        "              RAPPORT - EduSearch Global 🌍",
-        "=" * 70,
-        f"Recherche : {query or 'N/A'}",
-        f"Date : {datetime.now().strftime('%d/%m/%Y à %H:%M')}",
-        f"Résultats trouvés : {len(results)}",
-        "=" * 70,
-        "",
-    ]
+        lignes.append("")
 
-    for i, r in enumerate(results, 1):
-        lines.extend([
-            f"--- Résultat #{i} ---",
-            f"🎓 Établissement         : {r.get('school_name', 'N/A')}",
-            f"📍 Localisation          : {r.get('location', 'N/A')}",
-            f"🌍 Pays                  : {r.get('country', 'N/A')}",
-            f"🏫 Type                  : {r.get('school_type', 'N/A')}",
-            f"📚 Programmes            : {_list_to_text(r.get('programs', []))}",
-            f"🎓 Niveaux               : {_list_to_text(r.get('degree_levels', []))}",
-            f"🗣️ Langue               : {r.get('language_of_instruction', 'N/A')}",
-            f"💰 Frais scolarité       : {r.get('tuition_fee', 'N/A')}",
-            f"🧾 Frais dossier         : {r.get('application_fee', 'N/A')}",
-            f"🎁 Bourse disponible     : {r.get('scholarship_available', 'N/A')}",
-            f"💶 Montant bourse        : {r.get('scholarship_amount', 'N/A')}",
-            f"📝 Détails bourse        : {r.get('scholarship_details', 'N/A')}",
-            f"✅ Éligibilité           : {r.get('eligibility', 'N/A')}",
-            f"📄 Admission             : {r.get('admission_requirements', 'N/A')}",
-            f"⏳ Date limite           : {r.get('deadline', 'N/A')}",
-            f"⌛ Durée                 : {r.get('duration', 'N/A')}",
-            f"☎️ Contact officiel      : {r.get('official_contact', 'N/A')}",
-            f"📌 Résumé                : {r.get('summary', 'N/A')}",
-            f"🔗 Source                : {r.get('url', 'N/A')}",
-            "",
-        ])
+    # ── Pied de page ──────────────────────────────────────────────────
+    lignes.append("=" * 60)
+    lignes.append("  Ce fichier a été généré par EduSearch.")
+    lignes.append("  Il peut être lu hors-ligne sur tout appareil.")
+    lignes.append("=" * 60)
 
-    lines.extend([
-        "=" * 70,
-        "Rapport généré automatiquement par EduSearch Global",
-        "=" * 70,
-    ])
-
-    return "\n".join(lines)
-
-
-def render_export_section(results: list[dict], query: str = ""):
-    """
-    Affiche les boutons d'export dans l'interface Streamlit.
-
-    Args:
-        results: Liste de dicts avec les données des écoles
-        query: La recherche effectuée
-    """
-    if not results:
-        return
-
-    st.markdown("---")
-    st.subheader("📥 Exporter les Résultats")
-
-    col1, col2, col3 = st.columns(3)
-
-    with col1:
-        excel_data = create_excel_report(results, query)
-        st.download_button(
-            label="📊 Télécharger Excel (.xlsx)",
-            data=excel_data,
-            file_name=f"ecoles_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
-            mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=True,
-        )
-
-    with col2:
-        csv_data = create_csv_report(results)
-        st.download_button(
-            label="📋 Télécharger CSV",
-            data=csv_data,
-            file_name=f"ecoles_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
-            mime="text/csv",
-            use_container_width=True,
-        )
-
-    with col3:
-        text_data = create_text_report(results, query)
-        st.download_button(
-            label="📄 Télécharger Rapport (.txt)",
-            data=text_data,
-            file_name=f"rapport_ecoles_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
-            mime="text/plain",
-            use_container_width=True,
-        )
+    return "\n".join(lignes)

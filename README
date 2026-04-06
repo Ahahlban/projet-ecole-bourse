@@ -1,0 +1,114 @@
+====================================================
+  EDUSEARCH — Guide complet d'installation
+====================================================
+
+STRUCTURE DU PROJET
+-------------------
+edusearch/
+│
+├── data/
+│   └── schools.json          ← Base de données (générée une fois)
+│
+├── modules/
+│   ├── __init__.py           ← Fichier vide obligatoire
+│   ├── generator.py          ← Script 1 : génère la base avec Gemini
+│   ├── search.py             ← Script 2 : filtre local sans internet
+│   ├── chatbot.py            ← Script 3 : mini-bot hors-ligne
+│   └── export.py             ← Script 4 : génère le fichier .txt
+│
+├── .streamlit/
+│   └── secrets.toml          ← Votre clé API Gemini
+│
+├── main.py                   ← Application principale
+├── requirements.txt          ← Dépendances Python
+└── README.txt                ← Ce fichier
+
+
+====================================================
+  ÉTAPE 1 — INSTALLER PYTHON ET LES DÉPENDANCES
+====================================================
+
+Dans le terminal PyCharm (ou tout terminal) :
+
+  pip install streamlit google-genai
+
+
+====================================================
+  ÉTAPE 2 — CONFIGURER LA CLÉ API GEMINI
+====================================================
+
+1. Allez sur : https://aistudio.google.com/app/apikey
+2. Créez une clé API gratuite
+3. Ouvrez le fichier : .streamlit/secrets.toml
+4. Remplacez METTEZ_VOTRE_CLE_ICI par votre vraie clé
+
+  Gemini_API_Key = "AIzaSy..."
+
+
+====================================================
+  ÉTAPE 3 — GÉNÉRER LA BASE DE DONNÉES (UNE FOIS)
+====================================================
+
+Cette étape utilise internet et Gemini UNE SEULE FOIS.
+Après, l'application fonctionne hors-ligne.
+
+Dans le terminal, depuis le dossier edusearch/ :
+
+  python modules/generator.py
+
+Attendez environ 2 minutes.
+Le fichier data/schools.json sera créé automatiquement.
+
+NOTE : Un fichier d'exemple (8 écoles) est déjà fourni
+dans data/schools.json pour tester sans Gemini.
+
+
+====================================================
+  ÉTAPE 4 — LANCER L'APPLICATION
+====================================================
+
+  streamlit run main.py
+
+L'application s'ouvre dans votre navigateur :
+  http://localhost:8501
+
+Elle fonctionne maintenant SANS CONNEXION INTERNET.
+
+
+====================================================
+  UTILISATION
+====================================================
+
+1. Utilisez les filtres à gauche (domaine, pays, bourse...)
+2. Cliquez sur "Rechercher"
+3. Lisez les résultats (cartes avec badge vert = bourse dispo)
+4. Posez des questions au mini-bot dans l'onglet "Mini-Bot"
+5. Téléchargez votre résumé en .txt dans l'onglet "Télécharger"
+
+
+====================================================
+  POURQUOI CE PROJET EST "LOW-TECH" ?
+====================================================
+
+- Gemini est appelé UNE SEULE FOIS pour créer la base
+- L'application filtre en local (zéro réseau après)
+- Le fichier .txt est lisible sur tout appareil
+- Pas besoin de compte ni de connexion pour l'étudiant
+- L'application peut tourner sur un vieux PC/Mac
+
+
+====================================================
+  EN CAS DE PROBLÈME
+====================================================
+
+Erreur "base de données vide"
+→ Lancez : python modules/generator.py
+
+Erreur "clé API invalide"
+→ Vérifiez .streamlit/secrets.toml
+
+Erreur "module not found"
+→ Lancez : pip install streamlit google-genai
+
+Port déjà utilisé
+→ Lancez : streamlit run main.py --server.port 8502

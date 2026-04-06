@@ -1,9 +1,2 @@
 streamlit
 google-genai
-google-generativeai
-beautifulsoup4
-requests
-ddgs
-plotly
-pandas
-openpyxl
