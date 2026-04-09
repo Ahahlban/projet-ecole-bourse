@@ -19,7 +19,7 @@ jobs:
           fetch-depth: 0  
 
       - name: Lancer l'analyse SonarCloud
-        uses: SonarSource/sonarcloud-github-action@master
+        uses: SonarSource/sonarqube-scan-action@master
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}  # Ce token est géré automatiquement par GitHub
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}    # C'est le secret que tu as ajouté à l'étape 1
