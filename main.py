@@ -8,12 +8,12 @@ from modules.student_guidance import render_comparison_page
 
 def main():
     st.set_page_config(
-        page_title="BourseScope",
+        page_title="SchoolFinder",
         page_icon="🎓",
         layout="wide"
     )
 
-    st.title("🎓 BourseScope")
+    st.title("🎓 SchoolFinder")
     st.write("Trouvez des établissements plus accessibles financièrement à partir d'une requête libre et de filtres ciblés.")
 
     tab1, tab2, tab3, tab4 = st.tabs([
