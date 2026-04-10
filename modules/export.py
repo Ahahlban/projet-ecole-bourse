@@ -4,14 +4,14 @@ import streamlit as st
 from datetime import datetime
 
 
-def _list_to_text(value):
+def _format_export_list(value):
     """Convertit une liste en texte lisible pour export."""
     if isinstance(value, list):
         return ", ".join(str(v) for v in value) if value else "N/A"
     return value if value not in [None, ""] else "N/A"
 
 
-def create_excel_report(results: list[dict], query: str = "") -> bytes:
+def build_excel_report(results: list[dict], query: str = "") -> bytes:
     """
     Crée un fichier Excel structuré avec les résultats.
 
@@ -30,8 +30,8 @@ def create_excel_report(results: list[dict], query: str = "") -> bytes:
             "Localisation": r.get("location", "N/A"),
             "Pays": r.get("country", "N/A"),
             "Type d'établissement": r.get("school_type", "N/A"),
-            "Programmes": _list_to_text(r.get("programs", [])),
-            "Niveaux d'études": _list_to_text(r.get("degree_levels", [])),
+            "Programmes": _format_export_list(r.get("programs", [])),
+            "Niveaux d'études": _format_export_list(r.get("degree_levels", [])),
             "Langue d'enseignement": r.get("language_of_instruction", "N/A"),
             "Frais de scolarité": r.get("tuition_fee", "N/A"),
             "Frais de dossier": r.get("application_fee", "N/A"),
@@ -64,7 +64,7 @@ def create_excel_report(results: list[dict], query: str = "") -> bytes:
                 query or "N/A",
                 datetime.now().strftime("%d/%m/%Y à %H:%M"),
                 len(results),
-                "EduSearch Global 🌍"
+                "BourseScope"
             ]
         }
         pd.DataFrame(summary_data).to_excel(writer, sheet_name="Résumé", index=False)
@@ -86,7 +86,7 @@ def create_excel_report(results: list[dict], query: str = "") -> bytes:
     return output.getvalue()
 
 
-def create_csv_report(results: list[dict]) -> str:
+def build_csv_report(results: list[dict]) -> str:
     """
     Crée un fichier CSV avec les résultats.
 
@@ -103,8 +103,8 @@ def create_csv_report(results: list[dict]) -> str:
             "Localisation": r.get("location", "N/A"),
             "Pays": r.get("country", "N/A"),
             "Type": r.get("school_type", "N/A"),
-            "Programmes": _list_to_text(r.get("programs", [])),
-            "Niveaux": _list_to_text(r.get("degree_levels", [])),
+            "Programmes": _format_export_list(r.get("programs", [])),
+            "Niveaux": _format_export_list(r.get("degree_levels", [])),
             "Langue": r.get("language_of_instruction", "N/A"),
             "Frais de scolarité": r.get("tuition_fee", "N/A"),
             "Frais de dossier": r.get("application_fee", "N/A"),
@@ -124,7 +124,7 @@ def create_csv_report(results: list[dict]) -> str:
     return df.to_csv(index=False)
 
 
-def create_text_report(results: list[dict], query: str = "") -> str:
+def build_text_report(results: list[dict], query: str = "") -> str:
     """
     Crée un rapport texte formaté.
 
@@ -137,7 +137,7 @@ def create_text_report(results: list[dict], query: str = "") -> str:
     """
     lines = [
         "=" * 70,
-        "              RAPPORT - EduSearch Global 🌍",
+        "              RAPPORT - BourseScope",
         "=" * 70,
         f"Recherche : {query or 'N/A'}",
         f"Date : {datetime.now().strftime('%d/%m/%Y à %H:%M')}",
@@ -149,31 +149,31 @@ def create_text_report(results: list[dict], query: str = "") -> str:
     for i, r in enumerate(results, 1):
         lines.extend([
             f"--- Résultat #{i} ---",
-            f"🎓 Établissement         : {r.get('school_name', 'N/A')}",
-            f"📍 Localisation          : {r.get('location', 'N/A')}",
-            f"🌍 Pays                  : {r.get('country', 'N/A')}",
-            f"🏫 Type                  : {r.get('school_type', 'N/A')}",
-            f"📚 Programmes            : {_list_to_text(r.get('programs', []))}",
-            f"🎓 Niveaux               : {_list_to_text(r.get('degree_levels', []))}",
-            f"🗣️ Langue               : {r.get('language_of_instruction', 'N/A')}",
-            f"💰 Frais scolarité       : {r.get('tuition_fee', 'N/A')}",
-            f"🧾 Frais dossier         : {r.get('application_fee', 'N/A')}",
-            f"🎁 Bourse disponible     : {r.get('scholarship_available', 'N/A')}",
-            f"💶 Montant bourse        : {r.get('scholarship_amount', 'N/A')}",
-            f"📝 Détails bourse        : {r.get('scholarship_details', 'N/A')}",
-            f"✅ Éligibilité           : {r.get('eligibility', 'N/A')}",
-            f"📄 Admission             : {r.get('admission_requirements', 'N/A')}",
-            f"⏳ Date limite           : {r.get('deadline', 'N/A')}",
-            f"⌛ Durée                 : {r.get('duration', 'N/A')}",
-            f"☎️ Contact officiel      : {r.get('official_contact', 'N/A')}",
-            f"📌 Résumé                : {r.get('summary', 'N/A')}",
-            f"🔗 Source                : {r.get('url', 'N/A')}",
+            f"Établissement         : {r.get('school_name', 'N/A')}",
+            f"Localisation          : {r.get('location', 'N/A')}",
+            f"Pays                  : {r.get('country', 'N/A')}",
+            f"Type                  : {r.get('school_type', 'N/A')}",
+            f"Programmes            : {_format_export_list(r.get('programs', []))}",
+            f"Niveaux               : {_format_export_list(r.get('degree_levels', []))}",
+            f"Langue                : {r.get('language_of_instruction', 'N/A')}",
+            f"Frais scolarité       : {r.get('tuition_fee', 'N/A')}",
+            f"Frais dossier         : {r.get('application_fee', 'N/A')}",
+            f"Bourse disponible     : {r.get('scholarship_available', 'N/A')}",
+            f"Montant bourse        : {r.get('scholarship_amount', 'N/A')}",
+            f"Détails bourse        : {r.get('scholarship_details', 'N/A')}",
+            f"Éligibilité           : {r.get('eligibility', 'N/A')}",
+            f"Admission             : {r.get('admission_requirements', 'N/A')}",
+            f"Date limite           : {r.get('deadline', 'N/A')}",
+            f"Durée                 : {r.get('duration', 'N/A')}",
+            f"Contact officiel      : {r.get('official_contact', 'N/A')}",
+            f"Résumé                : {r.get('summary', 'N/A')}",
+            f"Source                : {r.get('url', 'N/A')}",
             "",
         ])
 
     lines.extend([
         "=" * 70,
-        "Rapport généré automatiquement par EduSearch Global",
+        "Rapport généré automatiquement par BourseScope",
         "=" * 70,
     ])
 
@@ -192,14 +192,14 @@ def render_export_section(results: list[dict], query: str = ""):
         return
 
     st.markdown("---")
-    st.subheader("📥 Exporter les Résultats")
+    st.subheader("Exporter les résultats")
 
     col1, col2, col3 = st.columns(3)
 
     with col1:
-        excel_data = create_excel_report(results, query)
+        excel_data = build_excel_report(results, query)
         st.download_button(
-            label="📊 Télécharger Excel (.xlsx)",
+            label="Télécharger Excel (.xlsx)",
             data=excel_data,
             file_name=f"ecoles_{datetime.now().strftime('%Y%m%d_%H%M')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -207,9 +207,9 @@ def render_export_section(results: list[dict], query: str = ""):
         )
 
     with col2:
-        csv_data = create_csv_report(results)
+        csv_data = build_csv_report(results)
         st.download_button(
-            label="📋 Télécharger CSV",
+            label="Télécharger CSV",
             data=csv_data,
             file_name=f"ecoles_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
             mime="text/csv",
@@ -217,9 +217,9 @@ def render_export_section(results: list[dict], query: str = ""):
         )
 
     with col3:
-        text_data = create_text_report(results, query)
+        text_data = build_text_report(results, query)
         st.download_button(
-            label="📄 Télécharger Rapport (.txt)",
+            label="Télécharger Rapport (.txt)",
             data=text_data,
             file_name=f"rapport_ecoles_{datetime.now().strftime('%Y%m%d_%H%M')}.txt",
             mime="text/plain",

@@ -29,7 +29,7 @@ def ensure_list(value):
     return [str(value)]
 
 
-def normalize_school(item: dict) -> dict:
+def normalize_school_result(item: dict) -> dict:
     return {
         "school_name": item.get("school_name", "Non détecté"),
         "location": item.get("location", ""),
@@ -54,7 +54,51 @@ def normalize_school(item: dict) -> dict:
     }
 
 
-def list_to_text(value):
+def format_list_as_text(value):
     if isinstance(value, list):
         return ", ".join(str(v) for v in value) if value else ""
     return value if value not in [None, ""] else ""
+
+
+def extract_numeric_amount(value) -> float | None:
+    if value in [None, "", "N/A", "Non détecté", "Non vérifié", "À vérifier", "Non précisé"]:
+        return None
+
+    numbers = re.findall(r"[\d]+(?:[\s.,]\d+)*", str(value).strip())
+    if not numbers:
+        return None
+
+    try:
+        return float(numbers[0].replace(" ", "").replace(",", "."))
+    except ValueError:
+        return None
+
+
+def is_highly_selective_school(name: str) -> bool:
+    normalized_name = str(name or "").lower()
+    blocked_keywords = {
+        "hec", "essec", "escp", "insead", "polytechnique",
+        "harvard", "stanford", "mit", "princeton", "yale",
+        "columbia", "caltech", "oxford", "cambridge"
+    }
+    return any(keyword in normalized_name for keyword in blocked_keywords)
+
+
+def fits_access_mission(item: dict, max_budget: float | None = None) -> bool:
+    school_name = item.get("school_name", "")
+    tuition_fee = extract_numeric_amount(item.get("tuition_fee", ""))
+    scholarship_status = str(item.get("scholarship_available", "")).strip().lower()
+
+    if is_highly_selective_school(school_name):
+        has_strong_financial_support = scholarship_status in {"oui", "possible"}
+        if tuition_fee is None or tuition_fee > 15000:
+            return False
+        if not has_strong_financial_support and tuition_fee > 8000:
+            return False
+
+    if max_budget is not None and tuition_fee is not None and tuition_fee > max_budget:
+        scholarship_offset = scholarship_status in {"oui", "possible"}
+        if not scholarship_offset:
+            return False
+
+    return True

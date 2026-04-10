@@ -2,10 +2,11 @@ import plotly.express as px
 import plotly.graph_objects as go
 import pandas as pd
 import streamlit as st
-import re
+
+from modules.utils import extract_numeric_amount
 
 
-def prepare_dataframe(results: list[dict]) -> pd.DataFrame:
+def build_results_dataframe(results: list[dict]) -> pd.DataFrame:
     """
     Transforme les résultats de recherche en DataFrame propre.
 
@@ -20,33 +21,11 @@ def prepare_dataframe(results: list[dict]) -> pd.DataFrame:
 
     df = pd.DataFrame(results)
 
-    def extract_number(value):
-        """
-        Extrait une valeur numérique depuis une chaîne de type
-        '5 000 €', 'USD 12000', etc.
-        """
-        if not value:
-            return None
-
-        value_str = str(value).strip()
-        if value_str in ["N/A", "Non détecté", "À vérifier", "Non précisé"]:
-            return None
-
-        numbers = re.findall(r"[\d]+(?:[\s.,]\d+)*", value_str)
-        if numbers:
-            try:
-                cleaned = numbers[0].replace(" ", "").replace(",", ".")
-                return float(cleaned)
-            except ValueError:
-                return None
-        return None
-
-    # Colonnes numériques basées sur les nouvelles clés
-    df["scholarship_amount_num"] = df.get("scholarship_amount", pd.Series(dtype=str)).apply(extract_number)
-    df["tuition_fee_num"] = df.get("tuition_fee", pd.Series(dtype=str)).apply(extract_number)
+    df["scholarship_amount_num"] = df.get("scholarship_amount", pd.Series(dtype=str)).apply(extract_numeric_amount)
+    df["tuition_fee_num"] = df.get("tuition_fee", pd.Series(dtype=str)).apply(extract_numeric_amount)
 
     # Label plus lisible
-    def build_label(row):
+    def build_source_label(row):
         school_name = row.get("school_name", "")
         url = row.get("url", "")
 
@@ -61,7 +40,7 @@ def prepare_dataframe(results: list[dict]) -> pd.DataFrame:
 
         return "Source inconnue"
 
-    df["source_label"] = df.apply(build_label, axis=1)
+    df["source_label"] = df.apply(build_source_label, axis=1)
 
     # Normalisation du statut bourse
     df["scholarship_status"] = df.get("scholarship_available", pd.Series(dtype=str)).fillna("À vérifier")
@@ -69,23 +48,23 @@ def prepare_dataframe(results: list[dict]) -> pd.DataFrame:
     return df
 
 
-def render_comparison_chart(results: list[dict]):
+def render_financial_comparison_chart(results: list[dict]):
     """
     Affiche un graphique en barres comparant montant de bourse et frais de scolarité.
     """
-    df = prepare_dataframe(results)
+    df = build_results_dataframe(results)
 
     if df.empty or (df["scholarship_amount_num"].isna().all() and df["tuition_fee_num"].isna().all()):
-        st.info("📊 Pas assez de données numériques pour créer un graphique de comparaison.")
+        st.info("Pas assez de données numériques pour créer un graphique de comparaison.")
         return
 
-    st.subheader("📊 Comparaison Bourses vs Frais de Scolarité")
+    st.subheader("Comparaison bourses vs frais de scolarité")
 
     fig = go.Figure()
 
     if not df["scholarship_amount_num"].isna().all():
         fig.add_trace(go.Bar(
-            name="💰 Montant Bourse",
+            name="Montant bourse",
             x=df["source_label"],
             y=df["scholarship_amount_num"],
             marker_color="#2ecc71",
@@ -95,7 +74,7 @@ def render_comparison_chart(results: list[dict]):
 
     if not df["tuition_fee_num"].isna().all():
         fig.add_trace(go.Bar(
-            name="🏫 Frais de Scolarité",
+            name="Frais de scolarité",
             x=df["source_label"],
             y=df["tuition_fee_num"],
             marker_color="#e74c3c",
@@ -117,17 +96,17 @@ def render_comparison_chart(results: list[dict]):
     st.plotly_chart(fig, use_container_width=True)
 
 
-def render_scatter_plot(results: list[dict]):
+def render_scholarship_coverage_chart(results: list[dict]):
     """
     Affiche un nuage de points Bourse vs Frais de Scolarité.
     """
-    df = prepare_dataframe(results)
+    df = build_results_dataframe(results)
     valid = df.dropna(subset=["scholarship_amount_num", "tuition_fee_num"])
 
     if valid.empty or len(valid) < 2:
         return
 
-    st.subheader("🎯 Rapport Bourse / Frais de Scolarité")
+    st.subheader("Rapport bourse / frais de scolarité")
 
     valid = valid.copy()
     valid = valid[valid["tuition_fee_num"] > 0]
@@ -162,11 +141,11 @@ def render_scatter_plot(results: list[dict]):
     st.plotly_chart(fig, use_container_width=True)
 
 
-def render_pie_chart(results: list[dict]):
+def render_scholarship_distribution_chart(results: list[dict]):
     """
     Affiche la répartition des statuts de bourses trouvés.
     """
-    df = prepare_dataframe(results)
+    df = build_results_dataframe(results)
     if df.empty or "scholarship_status" not in df.columns:
         return
 
@@ -176,7 +155,7 @@ def render_pie_chart(results: list[dict]):
     if scholarships.empty:
         return
 
-    st.subheader("🍰 Répartition des Bourses Trouvées")
+    st.subheader("Répartition des bourses trouvées")
 
     counts = scholarships.value_counts().head(8)
 
@@ -197,11 +176,11 @@ def render_pie_chart(results: list[dict]):
     st.plotly_chart(fig, use_container_width=True)
 
 
-def render_country_chart(results: list[dict]):
+def render_country_distribution_chart(results: list[dict]):
     """
     Affiche la répartition des résultats par pays.
     """
-    df = prepare_dataframe(results)
+    df = build_results_dataframe(results)
     if df.empty or "country" not in df.columns:
         return
 
@@ -211,7 +190,7 @@ def render_country_chart(results: list[dict]):
     if countries.empty:
         return
 
-    st.subheader("🌍 Répartition par pays")
+    st.subheader("Répartition par pays")
 
     counts = countries.value_counts().head(10)
 
@@ -236,34 +215,34 @@ def render_dashboard(results: list[dict]):
     Fonction principale : affiche tous les graphiques du dashboard.
     """
     if not results:
-        st.info("📊 Lancez une recherche pour voir le dashboard apparaître ici.")
+        st.info("Lancez une recherche pour voir le dashboard apparaître ici.")
         return
 
     st.markdown("---")
-    st.header("📊 Dashboard Interactif")
+    st.header("Dashboard interactif")
 
-    df = prepare_dataframe(results)
+    df = build_results_dataframe(results)
     col1, col2, col3, col4 = st.columns(4)
 
     with col1:
-        st.metric("🔍 Sources analysées", len(results))
+        st.metric("Sources analysées", len(results))
 
     with col2:
         avg_bourse = df["scholarship_amount_num"].mean()
-        st.metric("💰 Bourse moyenne", f"{avg_bourse:,.0f}" if pd.notna(avg_bourse) else "N/A")
+        st.metric("Bourse moyenne", f"{avg_bourse:,.0f}" if pd.notna(avg_bourse) else "N/A")
 
     with col3:
         avg_cout = df["tuition_fee_num"].mean()
-        st.metric("🏫 Coût moyen", f"{avg_cout:,.0f}" if pd.notna(avg_cout) else "N/A")
+        st.metric("Coût moyen", f"{avg_cout:,.0f}" if pd.notna(avg_cout) else "N/A")
 
     with col4:
         if pd.notna(avg_bourse) and pd.notna(avg_cout) and avg_cout > 0:
             coverage = (avg_bourse / avg_cout * 100)
-            st.metric("📈 Couverture moyenne", f"{coverage:.0f}%")
+            st.metric("Couverture moyenne", f"{coverage:.0f}%")
         else:
-            st.metric("📈 Couverture moyenne", "N/A")
+            st.metric("Couverture moyenne", "N/A")
 
-    render_comparison_chart(results)
-    render_scatter_plot(results)
-    render_pie_chart(results)
-    render_country_chart(results)
+    render_financial_comparison_chart(results)
+    render_scholarship_coverage_chart(results)
+    render_scholarship_distribution_chart(results)
+    render_country_distribution_chart(results)
