@@ -51,6 +51,7 @@ def render_comparison_profile_form() -> dict | None:
                     "Frais de scolarité faibles",
                     "Programme en anglais",
                     "Facilité d'obtention du visa"
+                    "diplôme reconnu à l'international",
                 ],
                 default=[]
             )
