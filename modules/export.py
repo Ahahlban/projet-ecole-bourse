@@ -4,47 +4,60 @@ import streamlit as st
 from datetime import datetime
 
 
-def _format_export_list(value):
-    """Convertit une liste en texte lisible pour export."""
+def _format_export_list(value) -> str:
+    """
+    Convertit une liste ou une valeur en texte lisible pour l'export,
+    en nettoyant les résidus de chaînes vides ou invalides.
+    """
+    invalid_values = {
+        "", "n/a", "non détecté", "non verifie", "non verifié", "non vérifié",
+        "à vérifier", "a vérifier", "unknown", "null", "none"
+    }
+    
     if isinstance(value, list):
-        return ", ".join(str(v) for v in value) if value else "N/A"
-    return value if value not in [None, ""] else "N/A"
+        cleaned_list = [str(v).strip() for v in value if str(v).strip() and str(v).lower().strip() not in invalid_values]
+        return ", ".join(cleaned_list) if cleaned_list else "N/A"
+        
+    if value is None or str(value).strip().lower() in invalid_values:
+        return "N/A"
+        
+    return str(value).strip()
 
 
 def build_excel_report(results: list[dict], query: str = "") -> bytes:
     """
-    Crée un fichier Excel structuré avec les résultats.
+    Crée un fichier Excel structuré avec les résultats et un onglet résumé.
 
     Args:
         results: Liste de dicts avec les données des écoles
         query: La recherche effectuée
 
     Returns:
-        Bytes du fichier Excel
+        Bytes du fichier Excel prêt pour le téléchargement
     """
     rows = []
     for i, r in enumerate(results, 1):
         rows.append({
             "#": i,
-            "Établissement": r.get("school_name", "N/A"),
-            "Localisation": r.get("location", "N/A"),
-            "Pays": r.get("country", "N/A"),
-            "Type d'établissement": r.get("school_type", "N/A"),
-            "Programmes": _format_export_list(r.get("programs", [])),
-            "Niveaux d'études": _format_export_list(r.get("degree_levels", [])),
-            "Langue d'enseignement": r.get("language_of_instruction", "N/A"),
-            "Frais de scolarité": r.get("tuition_fee", "N/A"),
-            "Frais de dossier": r.get("application_fee", "N/A"),
-            "Bourse disponible": r.get("scholarship_available", "N/A"),
-            "Montant bourse": r.get("scholarship_amount", "N/A"),
-            "Détails bourse": r.get("scholarship_details", "N/A"),
-            "Éligibilité": r.get("eligibility", "N/A"),
-            "Conditions d'admission": r.get("admission_requirements", "N/A"),
-            "Date limite": r.get("deadline", "N/A"),
-            "Durée": r.get("duration", "N/A"),
-            "Contact officiel": r.get("official_contact", "N/A"),
-            "Résumé": r.get("summary", "N/A"),
-            "Source (URL)": r.get("url", "N/A"),
+            "Établissement": _format_export_list(r.get("school_name")),
+            "Localisation": _format_export_list(r.get("location")),
+            "Pays": _format_export_list(r.get("country")),
+            "Type d'établissement": _format_export_list(r.get("school_type")),
+            "Programmes": _format_export_list(r.get("programs")),
+            "Niveaux d'études": _format_export_list(r.get("degree_levels")),
+            "Langue d'enseignement": _format_export_list(r.get("language_of_instruction")),
+            "Frais de scolarité": _format_export_list(r.get("tuition_fee")),
+            "Frais de dossier": _format_export_list(r.get("application_fee")),
+            "Bourse disponible": _format_export_list(r.get("scholarship_available")),
+            "Montant bourse": _format_export_list(r.get("scholarship_amount")),
+            "Détails bourse": _format_export_list(r.get("scholarship_details")),
+            "Éligibilité": _format_export_list(r.get("eligibility")),
+            "Conditions d'admission": _format_export_list(r.get("admission_requirements")),
+            "Date limite": _format_export_list(r.get("deadline")),
+            "Durée": _format_export_list(r.get("duration")),
+            "Contact officiel": _format_export_list(r.get("official_contact")),
+            "Résumé": _format_export_list(r.get("summary")),
+            "Source (URL)": _format_export_list(r.get("url")),
         })
 
     df = pd.DataFrame(rows)
@@ -64,11 +77,12 @@ def build_excel_report(results: list[dict], query: str = "") -> bytes:
                 query or "N/A",
                 datetime.now().strftime("%d/%m/%Y à %H:%M"),
                 len(results),
-                "BourseScope"
+                "SchoolFinder"
             ]
         }
         pd.DataFrame(summary_data).to_excel(writer, sheet_name="Résumé", index=False)
 
+        # Ajustement automatique de la largeur des colonnes Excel
         for sheet_name in writer.sheets:
             worksheet = writer.sheets[sheet_name]
             for column_cells in worksheet.columns:
@@ -88,36 +102,36 @@ def build_excel_report(results: list[dict], query: str = "") -> bytes:
 
 def build_csv_report(results: list[dict]) -> str:
     """
-    Crée un fichier CSV avec les résultats.
+    Crée un fichier CSV avec les résultats formatés.
 
     Args:
         results: Liste de dicts avec les données des écoles
 
     Returns:
-        String CSV
+        String au format CSV
     """
     rows = []
     for r in results:
         rows.append({
-            "Établissement": r.get("school_name", "N/A"),
-            "Localisation": r.get("location", "N/A"),
-            "Pays": r.get("country", "N/A"),
-            "Type": r.get("school_type", "N/A"),
-            "Programmes": _format_export_list(r.get("programs", [])),
-            "Niveaux": _format_export_list(r.get("degree_levels", [])),
-            "Langue": r.get("language_of_instruction", "N/A"),
-            "Frais de scolarité": r.get("tuition_fee", "N/A"),
-            "Frais de dossier": r.get("application_fee", "N/A"),
-            "Bourse disponible": r.get("scholarship_available", "N/A"),
-            "Montant bourse": r.get("scholarship_amount", "N/A"),
-            "Détails bourse": r.get("scholarship_details", "N/A"),
-            "Éligibilité": r.get("eligibility", "N/A"),
-            "Admission": r.get("admission_requirements", "N/A"),
-            "Date limite": r.get("deadline", "N/A"),
-            "Durée": r.get("duration", "N/A"),
-            "Contact": r.get("official_contact", "N/A"),
-            "Résumé": r.get("summary", "N/A"),
-            "URL": r.get("url", "N/A"),
+            "Établissement": _format_export_list(r.get("school_name")),
+            "Localisation": _format_export_list(r.get("location")),
+            "Pays": _format_export_list(r.get("country")),
+            "Type": _format_export_list(r.get("school_type")),
+            "Programmes": _format_export_list(r.get("programs")),
+            "Niveaux": _format_export_list(r.get("degree_levels")),
+            "Langue": _format_export_list(r.get("language_of_instruction")),
+            "Frais de scolarité": _format_export_list(r.get("tuition_fee")),
+            "Frais de dossier": _format_export_list(r.get("application_fee")),
+            "Bourse disponible": _format_export_list(r.get("scholarship_available")),
+            "Montant bourse": _format_export_list(r.get("scholarship_amount")),
+            "Détails bourse": _format_export_list(r.get("scholarship_details")),
+            "Éligibilité": _format_export_list(r.get("eligibility")),
+            "Admission": _format_export_list(r.get("admission_requirements")),
+            "Date limite": _format_export_list(r.get("deadline")),
+            "Durée": _format_export_list(r.get("duration")),
+            "Contact": _format_export_list(r.get("official_contact")),
+            "Résumé": _format_export_list(r.get("summary")),
+            "URL": _format_export_list(r.get("url")),
         })
 
     df = pd.DataFrame(rows)
@@ -126,18 +140,18 @@ def build_csv_report(results: list[dict]) -> str:
 
 def build_text_report(results: list[dict], query: str = "") -> str:
     """
-    Crée un rapport texte formaté.
+    Crée un rapport texte joliment formaté pour lecture brute.
 
     Args:
         results: Liste de dicts avec les données des écoles
         query: La recherche effectuée
 
     Returns:
-        String du rapport
+        String du rapport textuel complet
     """
     lines = [
         "=" * 70,
-        "              RAPPORT - BourseScope",
+        "                      RAPPORT - SchoolFinder",
         "=" * 70,
         f"Recherche : {query or 'N/A'}",
         f"Date : {datetime.now().strftime('%d/%m/%Y à %H:%M')}",
@@ -149,31 +163,31 @@ def build_text_report(results: list[dict], query: str = "") -> str:
     for i, r in enumerate(results, 1):
         lines.extend([
             f"--- Résultat #{i} ---",
-            f"Établissement         : {r.get('school_name', 'N/A')}",
-            f"Localisation          : {r.get('location', 'N/A')}",
-            f"Pays                  : {r.get('country', 'N/A')}",
-            f"Type                  : {r.get('school_type', 'N/A')}",
-            f"Programmes            : {_format_export_list(r.get('programs', []))}",
-            f"Niveaux               : {_format_export_list(r.get('degree_levels', []))}",
-            f"Langue                : {r.get('language_of_instruction', 'N/A')}",
-            f"Frais scolarité       : {r.get('tuition_fee', 'N/A')}",
-            f"Frais dossier         : {r.get('application_fee', 'N/A')}",
-            f"Bourse disponible     : {r.get('scholarship_available', 'N/A')}",
-            f"Montant bourse        : {r.get('scholarship_amount', 'N/A')}",
-            f"Détails bourse        : {r.get('scholarship_details', 'N/A')}",
-            f"Éligibilité           : {r.get('eligibility', 'N/A')}",
-            f"Admission             : {r.get('admission_requirements', 'N/A')}",
-            f"Date limite           : {r.get('deadline', 'N/A')}",
-            f"Durée                 : {r.get('duration', 'N/A')}",
-            f"Contact officiel      : {r.get('official_contact', 'N/A')}",
-            f"Résumé                : {r.get('summary', 'N/A')}",
-            f"Source                : {r.get('url', 'N/A')}",
+            f"Établissement         : {_format_export_list(r.get('school_name'))}",
+            f"Localisation          : {_format_export_list(r.get('location'))}",
+            f"Pays                  : {_format_export_list(r.get('country'))}",
+            f"Type                  : {_format_export_list(r.get('school_type'))}",
+            f"Programmes            : {_format_export_list(r.get('programs'))}",
+            f"Niveaux               : {_format_export_list(r.get('degree_levels'))}",
+            f"Langue                : {_format_export_list(r.get('language_of_instruction'))}",
+            f"Frais scolarité       : {_format_export_list(r.get('tuition_fee'))}",
+            f"Frais dossier         : {_format_export_list(r.get('application_fee'))}",
+            f"Bourse disponible     : {_format_export_list(r.get('scholarship_available'))}",
+            f"Montant bourse        : {_format_export_list(r.get('scholarship_amount'))}",
+            f"Détails bourse        : {_format_export_list(r.get('scholarship_details'))}",
+            f"Éligibilité           : {_format_export_list(r.get('eligibility'))}",
+            f"Admission             : {_format_export_list(r.get('admission_requirements'))}",
+            f"Date limite           : {_format_export_list(r.get('deadline'))}",
+            f"Durée                 : {_format_export_list(r.get('duration'))}",
+            f"Contact officiel      : {_format_export_list(r.get('official_contact'))}",
+            f"Résumé                : {_format_export_list(r.get('summary'))}",
+            f"Source                : {_format_export_list(r.get('url'))}",
             "",
         ])
 
     lines.extend([
         "=" * 70,
-        "Rapport généré automatiquement par BourseScope",
+        "Rapport généré automatiquement par SchoolFinder",
         "=" * 70,
     ])
 
@@ -182,7 +196,7 @@ def build_text_report(results: list[dict], query: str = "") -> str:
 
 def render_export_section(results: list[dict], query: str = ""):
     """
-    Affiche les boutons d'export dans l'interface Streamlit.
+    Affiche les sections et les boutons de téléchargement d'export dans Streamlit.
 
     Args:
         results: Liste de dicts avec les données des écoles
@@ -193,6 +207,7 @@ def render_export_section(results: list[dict], query: str = ""):
 
     st.markdown("---")
     st.subheader("Exporter les résultats")
+    st.caption("Téléchargez la liste des établissements correspondants sous différents formats.")
 
     col1, col2, col3 = st.columns(3)
 
@@ -209,7 +224,7 @@ def render_export_section(results: list[dict], query: str = ""):
     with col2:
         csv_data = build_csv_report(results)
         st.download_button(
-            label="Télécharger CSV",
+            label="Télécharger CSV (.csv)",
             data=csv_data,
             file_name=f"ecoles_{datetime.now().strftime('%Y%m%d_%H%M')}.csv",
             mime="text/csv",

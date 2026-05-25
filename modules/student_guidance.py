@@ -50,8 +50,8 @@ def render_comparison_profile_form() -> dict | None:
                     "Coût de la vie faible",
                     "Frais de scolarité faibles",
                     "Programme en anglais",
-                    "Facilité d'obtention du visa"
-                    "diplôme reconnu à l'international",
+                    "Facilité d'obtention du visa",
+                    "Diplôme reconnu à l'international",
                 ],
                 default=[]
             )
@@ -106,6 +106,7 @@ def generate_accessible_comparisons(profile: dict, results: list[dict]) -> list[
         ]
 
         if not affordable_results:
+            st.warning("Aucun établissement trouvé ne correspond aux critères d'accessibilité financière avec votre budget actuel. Essayez d'augmenter légèrement le curseur de budget annuel maximum.")
             return []
 
         results_text = ""
@@ -134,23 +135,23 @@ Résumé: {result.get('summary', 'Non détecté')}
 """
 
         prompt = f"""
-Tu es un conseiller d'orientation spécialisé dans les parcours accessibles pour des étudiants avec budget limité.
+Tu es un conseiller d'orientation spécialisé dans les parcours accessibles pour des étudiants avec un budget limité.
 
-Voici le profil d'un étudiant :
+Voici le profil de l'étudiant :
 {profile}
 
-Voici une liste d'écoles / options trouvées :
+Voici la liste des options d'écoles trouvées :
 {results_text}
 
 Ta mission :
-- classer les meilleures options pour cet étudiant
-- prendre en compte le domaine, le niveau, le budget, les pays préférés, les langues et les critères importants
-- ne pas inventer d'informations absentes
-- pénaliser fortement les options dont le coût semble dépasser le budget
-- valoriser les options avec bourse, frais modérés, langue compatible et bon alignement académique
-- éviter de recommander des écoles élitistes ou inaccessibles financièrement
+- Classer les meilleures options pour cet étudiant.
+- Prendre en compte scrupuleusement le domaine, le niveau, le budget, les pays préférés, les langues et les critères importants sélectionnés.
+- Ne pas inventer d'informations absentes de la liste.
+- Pénaliser fortement les options dont le coût semble dépasser le budget.
+- Valoriser les options avec bourse disponible, frais modérés, langue compatible et bon alignement académique.
+- Éviter de recommander des écoles élitistes ou inaccessibles financièrement.
 
-Réponds UNIQUEMENT en JSON valide sous ce format :
+Réponds UNIQUEMENT en JSON valide sous ce format exact :
 [
   {{
     "score": 85,
@@ -158,7 +159,7 @@ Réponds UNIQUEMENT en JSON valide sous ce format :
     "url": "https://...",
     "reason": "Pourquoi cette option correspond au profil",
     "strengths": "Points forts principaux",
-    "risks": "Points de vigilance",
+    "risks": "Points de vigilance ou d'alerte",
     "advice": "Conseil concret pour candidater"
   }}
 ]
@@ -196,25 +197,43 @@ Retourne au maximum 5 options comparées, triées de la meilleure à la moins bo
 
 def render_ranked_comparisons(recommendations: list[dict]):
     if not recommendations:
-        st.warning("Aucune comparaison exploitable n'a été générée.")
         return
 
-    for recommendation in recommendations:
+    st.markdown("### Classement des meilleures options généré par l'IA")
+
+    for idx, recommendation in enumerate(recommendations, 1):
         score = recommendation.get("score", 0)
         title = recommendation.get("school_name", "Option suggérée")
         url = recommendation.get("url", "")
+        
+        # Attribution d'une couleur au badge en fonction du score
+        if score >= 80:
+            badge_color = "🟢"
+        elif score >= 50:
+            badge_color = "🟡"
+        else:
+            badge_color = "🔴"
 
-        st.info(
-            f"**Score : {score}/100** - {title}\n\n"
-            f"**URL :** {url if url else 'Non détectée'}\n\n"
-            f"**Pourquoi :** {recommendation.get('reason', '')}\n\n"
-            f"**Points forts :** {recommendation.get('strengths', '')}\n\n"
-            f"**Points de vigilance :** {recommendation.get('risks', '')}\n\n"
-            f"**Conseil :** {recommendation.get('advice', '')}"
-        )
+        with st.expander(f"{badge_color} #{idx} - {title} (Score : {score}/100)", expanded=(idx == 1)):
+            if url and url != "Non détecté":
+                st.markdown(f"🔗 **Lien officiel :** [{url}]({url})")
+            else:
+                st.markdown("🔗 **Lien officiel :** *Non renseigné*")
+                
+            st.markdown(f"💡 **Analyse de correspondance :** {recommendation.get('reason', 'N/A')}")
+            
+            col_a, col_b = st.columns(2)
+            with col_a:
+                st.markdown(f" **Points forts :**\n{recommendation.get('strengths', 'N/A')}")
+            with col_b:
+                st.markdown(f" **Points de vigilance :**\n{recommendation.get('risks', 'N/A')}")
+                
+            st.markdown("---")
+            st.markdown(f" **Conseil pour votre démarche :** {recommendation.get('advice', 'N/A')}")
 
 
 def render_comparison_page(results: list[dict]):
+    # Vérification simple et lisible si la liste est vide
     if not results:
         st.info("Lancez d'abord une recherche dans l'onglet 'Recherche' pour activer la comparaison personnalisée.")
         return
