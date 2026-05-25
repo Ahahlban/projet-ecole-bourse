@@ -119,18 +119,46 @@ def _build_accessible_search_prompt(query: str, filters: dict) -> str:
     degree_level = "" if filters.get("degree_level") == "Indifférent" else filters.get("degree_level", "")
     language = "" if filters.get("language") == "Indifférent" else filters.get("language", "")
     budget_max = str(filters.get("budget_max", "")).strip()
-    scholarship_only = filters.get("scholarship_only", False)
 
     return f"""
-Tu es EduSearch, un assistant IA expert en orientation universitaire mondiale, calqué sur la structure de Parcoursup.
+Tu es EduSearch, un assistant IA expert en orientation universitaire mondiale, connecté à la recherche Google.
 Tu dois identifier des établissements d'enseignement supérieur correspondant aux critères de l'étudiant étranger.
 
-CONTRAINTES DE LIENS ET DE DATES (TRÈS STRICTES) :
-1. "url" : Écris UNIQUEMENT l'URL brute de la page d'accueil principale de l'école (ex: "https://www.univ-paris1.fr"). Aucun lien profond de formation pour éviter les erreurs 404.
-2. "scholarship_link" : L'adresse URL brute d'accueil ou de la rubrique bourses.
-3. "deadline" : Trouve ou estime prudemment la DATE LIMITE DE CANDIDATURE pour l'année universitaire en cours/prochaine pour les profils internationaux.
+RÈGLES D'OR SUR LES LIENS (INTERDICTION D'INVENTER) :
+1. N'invente JAMAIS, au grand JAMAIS, une adresse URL. Si tu ne trouves pas l'URL exacte et réelle dans tes recherches, tu dois écrire "N/A".
+2. "url" : L'URL brute vérifiée du site principal de l'école (ex: "https://www.sorbonne-universite.fr"). Si inconnue, écris "N/A".
+3. "scholarship_link" : Le lien direct vers la section bourses/aides financières de cette école. Si l'école n'a pas de page spécifique ou si tu ne la trouves pas, écris STRICTEMENT "N/A". Ne crée jamais de faux liens profonds.
 
-Filtres :
+EXEMPLE DE COMPORTEMENT ATTENDU :
+Si la recherche porte sur une école dont tu connais le site mais pas le lien de bourse, ton JSON doit ressembler à ceci :
+[
+  {{
+    "school_name": "Université de Test",
+    "location": "Lyon",
+    "country": "France",
+    "school_type": "Université",
+    "programs": ["Informatique"],
+    "degree_levels": ["Licence"],
+    "language_of_instruction": "Français",
+    "tuition_fee": "170€/an",
+    "tuition_fee_non_eu": "2770€/an",
+    "application_fee": "0€",
+    "scholarship_available": "Possible",
+    "scholarship_estimated_amount": "Non quantifié",
+    "scholarship_details": "Bourses du CROUS disponibles pour les critères sociaux.",
+    "scholarship_link": "N/A", 
+    "eligibility": "Sous conditions de revenus",
+    "admission_requirements": "Baccalauréat",
+    "deadline": "31 Mai 2026",
+    "duration": "3 ans",
+    "official_contact": "contact@univ-test.fr",
+    "summary": "Une université publique.",
+    "url": "https://www.univ-test.fr",
+    "confidence": "Élevée"
+  }}
+]
+
+Filtres demandés par l'étudiant :
 - Mots-clés : {query}
 - Ville : {city if city else "Indifférent"}
 - Pays : {country if country else "Indifférent"}
@@ -138,35 +166,8 @@ Filtres :
 - Langue : {language}
 - Budget max : {budget_max} €
 
-Format JSON à retourner (sans aucun texte explicatif avant ou après) :
-[
-  {{
-    "school_name": "Nom de l'université ou école",
-    "location": "Ville",
-    "country": "Pays",
-    "school_type": "Université / Lycée / IUT / École",
-    "programs": ["Nom du cursus"],
-    "degree_levels": ["Licence", "Master"],
-    "language_of_instruction": "Français",
-    "tuition_fee": "Frais UE/Locaux",
-    "tuition_fee_non_eu": "Frais Étudiants Extracommunautaires (ex: 2850€/an)",
-    "application_fee": "Frais de dossier",
-    "scholarship_available": "Oui / Possible / Non",
-    "scholarship_estimated_amount": "Estimation (ex: 3500€/an)",
-    "scholarship_details": "Détails de l'aide",
-    "scholarship_link": "https://www.site-bourse-ecole.edu",
-    "eligibility": "Critères",
-    "admission_requirements": "Prérequis",
-    "deadline": "Ex: 31 Mars 2026 (Date limite de dépôt)",
-    "duration": "Durée",
-    "official_contact": "Contact",
-    "summary": "Résumé de l'opportunité.",
-    "url": "https://www.site-accueil-uniquement.edu",
-    "confidence": "Élevée"
-  }}
-]
+Retourne uniquement le tableau JSON final, sans fioritures ni texte explicatif.
 """
-
 
 def find_accessible_school_results(query: str, filters: dict) -> tuple[str, list[dict]]:
     api_key = st.secrets.get("Gemini_API_Key")
