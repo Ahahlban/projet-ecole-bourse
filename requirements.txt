@@ -7,3 +7,5 @@ ddgs
 plotly
 pandas
 openpyxl
+pytest
+pytest-cov
