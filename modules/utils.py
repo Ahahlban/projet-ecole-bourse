@@ -46,12 +46,13 @@ def normalize_school_result(item: dict) -> dict:
     else:
         valid_url = raw_url
 
-    # Lien vers le portail bourses de l'école
-    raw_scholarship_url = item.get("scholarship_link", "").strip()
-    if not raw_scholarship_url or raw_scholarship_url in ["Non détecté", "N/A"] or not raw_scholarship_url.startswith("http"):
-        valid_scholarship_url = generate_search_fallback_url(school_name, country, "scholarships financial aid international students")
-    else:
-        valid_scholarship_url = raw_scholarship_url
+# Lien vers le portail bourses de l'école : Forcer la recherche Google sécurisée
+    # Car l'IA hallucine trop souvent les liens profonds
+    valid_scholarship_url = generate_search_fallback_url(
+        school_name, 
+        country, 
+        "bourses aides financières étudiants internationaux"
+    )
 
     return {
         "school_name": school_name,
