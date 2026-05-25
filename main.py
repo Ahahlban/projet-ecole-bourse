@@ -1,88 +1,89 @@
 import streamlit as st
-import time
-from modules.scraper import get_links
-from modules.web_reader import get_page_content
-from modules.parser import filter_school_links, analyze_content
 
-# --- CONFIGURATION ---
-st.set_page_config(page_title="EduSearch Global", page_icon="🌍", layout="wide")
+from modules.school_search import render_school_search_page
+from modules.dashboard import render_dashboard
+from modules.export import render_export_section
+from modules.student_guidance import render_comparison_page
 
-# --- FONCTIONS AVEC CACHE (Économie de Quota) ---
 
-@st.cache_data(ttl=3600)
-def cached_get_links(q, l, t):
-    return get_links(q, l, t, max_results=30)
+def main():
+    # Configuration de la page Streamlit
+    st.set_page_config(
+        page_title="EduSearch",
+        page_icon="Graduation_Cap",
+        layout="wide",
+        initial_sidebar_state="expanded"
+    )
 
-@st.cache_data(ttl=3600)
-def cached_filter_links(links_list):
-    return filter_school_links(links_list)
-
-@st.cache_data(ttl=3600)
-def cached_analysis(url, lang):
-    # Combine la lecture et l'analyse avec support de langue
-    raw_text = get_page_content(url)
-    data = analyze_content(raw_text, lang)
-    return data, raw_text
-
-# --- BARRE LATÉRALE ---
-st.sidebar.header("🌐 Options Internationales")
-
-# Choix de la langue d'affichage
-target_lang = st.sidebar.selectbox(
-    "Langue des résultats", 
-    ["Français", "English", "Español", "Deutsch", "Português"]
-)
-
-st.sidebar.divider()
-
-# Saisie libre pour l'international
-location = st.sidebar.text_input("📍 Localisation (Pays/Ville)", placeholder="ex: Canada, Tokyo, Berlin...")
-school_type = st.sidebar.text_input("🏫 Type d'école", placeholder="ex: University, Design School...")
-
-# --- CORPS DE PAGE ---
-st.title("🌍 EduSearch Global")
-st.subheader("Trouvez des bourses et comparez les coûts de scolarité")
-st.markdown("---")
-
-query = st.text_input("Quelle formation cherchez-vous ?", placeholder="ex: Architecture, Medicine...")
-
-if st.button("🚀 Lancer la recherche internationale"):
-    if not query:
-        st.warning("Veuillez entrer un mot-clé.")
-    else:
-        with st.spinner(f"Analyse mondiale en cours ({target_lang})..."):
+    # Barre latérale d'information
+    with st.sidebar:
+        st.markdown("### A propos de EduSearch")
+        st.write(
+            "Cette plateforme est concue pour aider les étudiants à identifier, analyser "
+            "et comparer les établissements d'enseignement supérieur internationaux "
+            "en mettant l'accent sur l'accessibilité financière et les opportunités de bourses."
+        )
+        st.markdown("---")
+        
+        # Indicateur de configuration de la cle API Gemini
+        st.markdown("### Statut des Services")
+        api_key_status = "Gemini_API_Key" in st.secrets
+        if api_key_status:
+            st.success("Service d'Analyse IA (Gemini) actif")
+        else:
+            st.error("Cle API Gemini manquante dans les Secrets")
             
-            # Étape 1 : Scraping
-            raw_links = cached_get_links(query, location, school_type)
-            
-            if not raw_links:
-                st.error("❌ Aucun résultat. Essayez des termes en anglais pour l'international.")
-            else:
-                # Étape 2 : Filtrage intelligent
-                links = cached_filter_links(raw_links)
-                st.success(f"✅ {len(links)} sources pertinentes identifiées !")
-                
-                progress_bar = st.progress(0)
-                
-                # Étape 3 : Analyse détaillée
-                for i, link in enumerate(links):
-                    percent_complete = (i + 1) / len(links)
-                    progress_bar.progress(percent_complete)
-                    
-                    data, raw_text = cached_analysis(link, target_lang)
+        st.markdown("---")
+        st.caption("Version 1.2.0 - Mission Accessibilite")
 
-                    with st.expander(f"📍 Source : {link[:70]}..."):
-                        col1, col2 = st.columns([2, 1])
-                        with col1:
-                            st.write(f"**Bourse :** {data.get('scholarship', 'N/A')}")
-                            st.write(f"**Montant Bourse :** :green[{data.get('montant', 'N/A')}]") 
-                            # Affichage du nouveau coût de l'école
-                            st.write(f"**Coût Scolarité :** :red[{data.get('cout_annuel', 'N/A')}]") 
-                            st.write(f"**Résumé ({target_lang}) :** {data.get('details', 'N/A')}")
-                        with col2:
-                            st.link_button("🌐 Visiter le site", link)
-                        
-                        st.divider()
-                        st.caption(f"Texte source détecté : {raw_text[:250]}...")
+    # Zone Principale de l'Application
+    st.title("EduSearch")
+    st.markdown(
+        "##### *Découvrez des établissements d'enseignement supérieur adaptés à vos ambitions et à votre budget.*"
+    )
+    st.write(
+        "Explorez les données récoltées en temps réel à l'aide d'une recherche par mots-cles libres, "
+        "puis laissez notre outil analyser la compatibilité avec vos critères financiers."
+    )
+    st.markdown(" ")
 
-                st.balloons()
+    # Recuperation des donnees partagees dans la session Streamlit
+    results = st.session_state.get("results", [])
+    query = st.session_state.get("last_query", "")
+
+    # Creation des onglets de navigation principale
+    tab1, tab2, tab3, tab4 = st.tabs([
+        "Recherche d'Etablissements",
+        "Dashboard Analytique",
+        "Orientation assistée",
+        "Export des Données"
+    ])
+
+    # Onglet 1 : Recherche et filtres de base
+    with tab1:
+        render_school_search_page()
+
+    # Onglet 2 : Visualisation graphique des donnees financieres
+    with tab2:
+        if results:
+            render_dashboard(results)
+        else:
+            st.info("Lancez d'abord une recherche dans le premier onglet pour afficher les statistiques du dashboard.")
+
+    # Onglet 3 : Analyse personnalisee par profil d'etudiant (IA)
+    with tab3:
+        if results:
+            render_comparison_page(results)
+        else:
+            st.info("Lancez d'abord une recherche dans le premier onglet pour debloquer le conseiller d'orientation virtuel.")
+
+    # Onglet 4 : Telechargement des rapports (Excel, CSV, TXT)
+    with tab4:
+        if results:
+            render_export_section(results, query)
+        else:
+            st.info("Lancez d'abord une recherche dans le premier onglet pour pouvoir exporter vos resultats.")
+
+
+if __name__ == "__main__":
+    main()
