@@ -244,7 +244,7 @@ def find_accessible_school_results(query: str, filters: dict) -> tuple[str, list
 
         # Activation de la recherche web pour de vraies URLs de bourses
         response = client.models.generate_content(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             contents=prompt + f"\n\nRequete de l'etudiant : {query}",
             config={
                 "tools": [{"google_search": {}}],

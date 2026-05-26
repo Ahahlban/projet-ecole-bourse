@@ -219,7 +219,7 @@ def generate_accessible_comparisons(profile: dict, results: list[dict]) -> list[
 
     try:
         genai.configure(api_key=api_key)
-        model = genai.GenerativeModel("gemini-2.0-flash")
+        model = genai.GenerativeModel("gemini-2.5-flash")
 
         # Pre-filtrage : exclure les etablissements hors budget
         affordable_results = [
