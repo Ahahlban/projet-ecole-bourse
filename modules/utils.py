@@ -61,12 +61,20 @@ def normalize_school_result(item: dict) -> dict:
         valid_url = generate_search_fallback_url(school_name, country, "official website home")
     else:
         valid_url = raw_url
-
+        version_final_projet
     # On force toujours un lien Google Search pour les bourses.
     # Les URLs profondes generees par l'IA menent systematiquement vers des 404 ou pages login.
     # Un lien Google Search cible est toujours valide et amene vers les vraies pages de bourses.
     valid_scholarship_url = generate_search_fallback_url(
         school_name, country, "bourses aide financiere etudiants internationaux scholarships"
+
+# Lien vers le portail bourses de l'école : Forcer la recherche Google sécurisée
+    # Car l'IA hallucine trop souvent les liens profonds
+    valid_scholarship_url = generate_search_fallback_url(
+        school_name, 
+        country, 
+        "bourses aides financières étudiants internationaux"
+ main
     )
 
     return {
